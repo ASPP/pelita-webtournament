@@ -1,6 +1,5 @@
 // pages/zmq.js
 import { useEffect, useState } from 'react';
-import { getMessages } from '../zmqServer';
 
 export default function ZMQMessages() {
   const [messages, setMessages] = useState([]);
