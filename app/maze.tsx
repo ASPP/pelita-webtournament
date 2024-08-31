@@ -660,14 +660,14 @@ function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, g
 
         {
           gameover ? (<>
-          <text fontSize="100" className="gameover"
+          <text fontSize="60" className="gameover"
             x="50%" y="25%"
             dominantBaseline="middle"
             textAnchor="middle"
           >
             GAME OVER
           </text>
-          <text fontSize="100" className="gameover"
+          <text fontSize="60" className="gameover"
             x="50%" y="75%"
             dominantBaseline="middle"
             textAnchor="middle"
