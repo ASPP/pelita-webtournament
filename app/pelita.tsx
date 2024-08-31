@@ -193,7 +193,7 @@ function Pelita() {
 
           {state === "intro" ? showIntro() : null}
 
-          {state === "match" ?
+          {state === "match" && gameState ?
             <PelitaMain gameState={gameState}></PelitaMain>
             : null
           }

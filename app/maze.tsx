@@ -672,7 +672,7 @@ function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, g
             dominantBaseline="middle"
             textAnchor="middle"
           >
-            { whowins == 2 ? "DRAW" : `${team_names[whowins]} wins!` }
+            { whowins == null || whowins == 2 ? "DRAW" : `${team_names[whowins]} wins!` }
           </text>
           </>) : null
         }
