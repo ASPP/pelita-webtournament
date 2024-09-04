@@ -1,7 +1,7 @@
-import Pelita from "./pelita";
+import PelitaTournament from "./tournament";
 
 export default function Home() {
   return (<>
-    <Pelita></Pelita>
+    <PelitaTournament></PelitaTournament>
   </>);
 }

@@ -20,10 +20,11 @@ type RootMsg = {
   __data__: null
 };
 
-type Pos = [number, number];
+export type Pos = [number, number];
 
 export type { RootMsg };
 
+export type ObserveDataL = ObserveData[];
 export interface ObserveData {
   game_uuid: string;
   walls: Pos[];
@@ -63,4 +64,58 @@ export interface RequestedMove {
   previous_position: number[];
   requested_position: number[];
   success: boolean;
+}
+
+
+export interface GameStats {
+  score: [number, number];
+  num_errors: [number, number];
+  kills: [number, number, number, number];
+  deaths: [number, number, number, number];
+  team_time: [number, number];
+}
+
+export interface GameState {
+  game_uuid: string;
+  shape: [number, number];
+  walls: [number, number][];
+  food: [number, number][];
+  bots: Tuple4<[number, number]>;
+  team_names: [string, string];
+  game_stats: GameStats;
+  whowins: number;
+  gameover: boolean;
+  say: Tuple4<string>;
+  round: number;
+  max_rounds: number;
+  turn: number;
+}
+
+export function conv_game_state(gs: ObserveData): GameState {
+  // const bot_directions = gs.bots.map((pos, idx) => {
+  //
+  // });
+
+  return {
+    "game_uuid": gs.game_uuid,
+    "shape": gs.shape,
+    "walls": gs.walls,
+    "food": gs.food,
+    "bots": gs.bots,
+    // "bot_directions": bot_directions,
+    "say": gs.say,
+    "turn": gs.turn,
+    "round": gs.round,
+    "max_rounds": gs.max_rounds,
+    "team_names": gs.team_names,
+    "game_stats": {
+      "score": gs.score,
+      "num_errors": gs.num_errors,
+      "kills": gs.kills,
+      "deaths": gs.deaths,
+      "team_time": gs.team_time,
+    },
+    "whowins": gs.whowins,
+    "gameover": gs.gameover
+  };
 }

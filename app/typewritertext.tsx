@@ -75,7 +75,7 @@ function TypewriterLine( { text, cursor, lineFinished }: { text: string, cursor:
 
     //Clearing the interval
     return () => clearInterval(interval);
-  }, [index]);
+  }, [index, text.length]);
 
   if (current === "")
     return (<div><br/></div>);

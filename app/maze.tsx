@@ -2,6 +2,7 @@
 
 import React, {
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState
@@ -261,7 +262,7 @@ function Food({ position, color }: { position: Pos, color: string }) {
       opacity={1}
       className={color}
       // transition={{ duration: 1 }}
-      // initial={{ opacity: 0 }}
+      initial={{ opacity: 1, r: cellSize / 5 }}
       // animate={{ opacity: 1 }}
       exit={{ opacity: 0, r: cellSize }}
     />
@@ -299,13 +300,6 @@ function Pacman({ direction, mouthAngle, color }: { direction: number, mouthAngl
 
   return (
     <g transform={ `rotate(${direction})` }
-      // style={{
-        // transform: `rotate(${direction})`
-      // }}
-      // animate={{
-        // rotate: direction
-      // }}
-      // transition={{ type: "spring", stiffness: 100 }}
       className={color}>
       <path
         d={pacmanPath(mouthAngle)}
@@ -321,7 +315,39 @@ function Pacman({ direction, mouthAngle, color }: { direction: number, mouthAngl
     </g>)
 }
 
-function Bot({ position, color, say, width, turnsAgo }: { position: Pos, color: string, say: string, width: number, turnsAgo: number }) {
+function Ghost({ direction, color }: { direction: number, color: string }) {
+  return (<g
+  id="ghost"
+  className={`${color} ghost`}
+>
+
+{/* Round path: // M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 C 8 9 6.6667 5.6 6 5.6 S 4.6667 8.19 4 8.19 S 2.6667 5.6 2 5.6 S 0.6667 8.19 0 8.19 S -1.3333 5.6 -2 5.6 S -3.3333 8.19 -4 8.19 S -5.3333 5.6 -6 5.6 S -8 9 -8 8 C -8 5.3333 -8 2.6667 -8 0 Z  */}
+{/* Straight path: // M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 L 6 5.6 L 4 8 L 2 5.6 L 0 8 L -2 5.6 L -4 8 L -6 5.6 L -8 8 L -8 0 Z */}
+
+  <path d="M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 C 8 9 6.6667 5.6 6 5.6 S 4.6667 8.19 4 8.19 S 2.6667 5.6 2 5.6 S 0.6667 8.19 0 8.19 S -1.3333 5.6 -2 5.6 S -3.3333 8.19 -4 8.19 S -5.3333 5.6 -6 5.6 S -8 9 -8 8 C -8 5.3333 -8 2.6667 -8 0 Z"
+
+
+    stroke="black"
+    strokeWidth={0.2}
+    opacity={0.9}
+  ></path>
+  <path d="M -3.2 1.1 C -2.2 1.1 -1.4 0.1 -1.4 -1.2 C -1.4 -2.5 -2.2 -3.6 -3.2 -3.6 C -4.2 -3.6 -5.1 -2.5 -5.1 -1.2 C -5.1 0.1 -4.2 1.1 -3.2 1.1 Z
+M 1.8 1.1 C 2.8 1.1 3.6 0.1 3.6 -1.2 C 3.6 -2.5 2.8 -3.6 1.8 -3.6 C 0.8 -3.6 -0 -2.5 -0 -1.2 C -0 0.1 0.8 1.1 1.8 1.1 Z"
+    stroke="black"
+    strokeWidth={0.2}
+    fill="white"
+  ></path>
+  <path d="M -3.5 0 C -3.1 0 -2.8 -0.4 -2.8 -0.9 C -2.8 -1.5 -3.1 -1.9 -3.5 -1.9 C -3.9 -1.9 -4.2 -1.5 -4.2 -0.9 C -4.2 -0.4 -3.9 0 -3.5 0 Z
+M 1.5 0 C 1.9 0 2.2 -0.4 2.2 -0.9 C 2.2 -1.5 1.9 -1.9 1.5 -1.9 C 1.1 -1.9 0.8 -1.5 0.8 -0.9 C 0.8 -0.4 1.1 0 1.5 0 Z"
+    stroke="black"
+    strokeWidth={0.2}
+    fill="black"
+  >
+  </path>
+</g>);
+}
+
+function Bot({ position, color, say, width, turnsAgo, fadeIn }: { position: Pos, color: string, say: string, width: number, turnsAgo: number, fadeIn: boolean }) {
   const leftSide = position[0] < width / 2;
   const inHomezone = () => {
     switch (color) {
@@ -349,31 +375,35 @@ function Bot({ position, color, say, width, turnsAgo }: { position: Pos, color: 
       else if (dx > 0) setDirection(0);
       else if (dy > 0) setDirection(90);
     }
-  }, [oldPosition]);
+  }, [position, oldPosition]);
 
   useEffect(() => {
+    if (fadeIn)
     anime.timeline()
       .add({
-        targets: '#mazebox .blue',
+        targets: '.bot .blue',
         opacity: [0, 1],
         easing: 'linear',
         duration: 2000,
       }, 3500)
       .add({
-        targets: '#mazebox .red',
+        targets: '.bot .red',
         opacity: [0, 1],
         easing: 'linear',
         duration: 2000,
-      }, 3500);;
-  }, []);
+      }, 3500);
+  }, [fadeIn]);
 
   return (
     <motion.g
-      style={{
-        transform: `translateX(${(position[0] + 0.5) * cellSize}) translateY(${(position[0] + 0.5) * cellSize}) scale(${cellSize / 16})`,
-        zIndex: 50 - turnsAgo
-      }}
+      transform={ `translate(${(position[0] + 0.5) * cellSize} ${(position[1] + 0.5) * cellSize}) scale(${cellSize / 16})` }
+      className="bot"
       animate={{
+        x: (position[0] + 0.5) * cellSize,
+        y: (position[1] + 0.5) * cellSize,
+        scale: cellSize / 16
+      }}
+      initial={{
         x: (position[0] + 0.5) * cellSize,
         y: (position[1] + 0.5) * cellSize,
         scale: cellSize / 16
@@ -381,39 +411,9 @@ function Bot({ position, color, say, width, turnsAgo }: { position: Pos, color: 
       transition={{ duration: 0.1 }}
     >
       {
-        inHomezone() ? (
-          <g
-            id="ghost"
-            className={`${color} ghost`}
-          >
-
-{/* Round path: // M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 C 8 9 6.6667 5.6 6 5.6 S 4.6667 8.19 4 8.19 S 2.6667 5.6 2 5.6 S 0.6667 8.19 0 8.19 S -1.3333 5.6 -2 5.6 S -3.3333 8.19 -4 8.19 S -5.3333 5.6 -6 5.6 S -8 9 -8 8 C -8 5.3333 -8 2.6667 -8 0 Z  */}
-{/* Straight path: // M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 L 6 5.6 L 4 8 L 2 5.6 L 0 8 L -2 5.6 L -4 8 L -6 5.6 L -8 8 L -8 0 Z */}
-
-            <path d="M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 C 8 9 6.6667 5.6 6 5.6 S 4.6667 8.19 4 8.19 S 2.6667 5.6 2 5.6 S 0.6667 8.19 0 8.19 S -1.3333 5.6 -2 5.6 S -3.3333 8.19 -4 8.19 S -5.3333 5.6 -6 5.6 S -8 9 -8 8 C -8 5.3333 -8 2.6667 -8 0 Z"
-
-
-              stroke="black"
-              strokeWidth={0.2}
-              opacity={0.9}
-            ></path>
-            <path d="M -3.2 1.1 C -2.2 1.1 -1.4 0.1 -1.4 -1.2 C -1.4 -2.5 -2.2 -3.6 -3.2 -3.6 C -4.2 -3.6 -5.1 -2.5 -5.1 -1.2 C -5.1 0.1 -4.2 1.1 -3.2 1.1 Z
-M 1.8 1.1 C 2.8 1.1 3.6 0.1 3.6 -1.2 C 3.6 -2.5 2.8 -3.6 1.8 -3.6 C 0.8 -3.6 -0 -2.5 -0 -1.2 C -0 0.1 0.8 1.1 1.8 1.1 Z"
-              stroke="black"
-              strokeWidth={0.2}
-              fill="white"
-            ></path>
-            <path d="M -3.5 0 C -3.1 0 -2.8 -0.4 -2.8 -0.9 C -2.8 -1.5 -3.1 -1.9 -3.5 -1.9 C -3.9 -1.9 -4.2 -1.5 -4.2 -0.9 C -4.2 -0.4 -3.9 0 -3.5 0 Z
-M 1.5 0 C 1.9 0 2.2 -0.4 2.2 -0.9 C 2.2 -1.5 1.9 -1.9 1.5 -1.9 C 1.1 -1.9 0.8 -1.5 0.8 -0.9 C 0.8 -0.4 1.1 0 1.5 0 Z"
-              stroke="black"
-              strokeWidth={0.2}
-              fill="black"
-            >
-            </path>
-          </g>
-        ) : (
-          <Pacman direction={direction} mouthAngle={mouthAngle} color={`${color} pacman`}></Pacman>
-        )
+        inHomezone()
+        ? (<Ghost direction={direction} color={`${color} ghost`}></Ghost>)
+        : (<Pacman direction={direction} mouthAngle={mouthAngle} color={`${color} pacman`}></Pacman>)
       }
       <text y="-10" className="sayBg">{say}</text>
       <text y="-10" className="say">{say}</text>
@@ -426,7 +426,7 @@ function Walls({ shape, walls }: { shape: Pos, walls: Pos[] }) {
   const [width, height] = shape;
 
   return (
-    <g id="maze">
+    <g className="maze">
       <line x1={(width) * cellSize / 2} y1={0.3 * cellSize}
             x2={width * cellSize / 2} y2={(height - 0.3) * cellSize} className="middleLine blackLine" />
       <line x1={(width - 0.1)  * cellSize / 2} y1={0.3 * cellSize}
@@ -465,7 +465,7 @@ function Walls({ shape, walls }: { shape: Pos, walls: Pos[] }) {
 }
 
 
-function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, gameover, round, turn }:
+function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, gameover, round, turn, animate }:
   {
     game_uuid: string,
     shape: Pos,
@@ -478,17 +478,22 @@ function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, g
     gameover: boolean,
     round: number,
     turn: number,
+    animate: boolean
   }
 ) {
   const [width, height] = shape;
   const [a, x, b, y] = bots;
   const [sayA, sayX, sayB, sayY] = say;
 
+  const mazeBoxRef = useRef<HTMLDivElement>(null);
+  // used so that we can revert the animation
+  const [hasWonScreen, setHasWonScreen] = useState(false);
+
   useEffect(() => {
-    if (game_uuid) {
+    if (game_uuid && animate) {
       let pathAnimation = anime.timeline()
         .add({
-          targets: '#mazebox #maze path',
+          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
           strokeDashoffset: [anime.setDashoffset, 0],
           easing: 'easeInCubic',
           duration: 2000,
@@ -497,59 +502,70 @@ function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, g
           loop: false
         })
         .add({
-          targets: '#mazebox #maze path',
+          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
           //fill: ['rgb(214, 219, 220)', "#faa"], // ffa
           fillOpacity: [0, 0.7], // ffa
           easing: 'linear',
           duration: 2000
         }, 2000)
         .add({
-          targets: '#mazebox #maze path',
+          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
           strokeWidth: 0,
           easing: 'linear',
           duration: 2000
         }, 4000)
         .add({
-          targets: '#mazebox .foodblue',
+          targets: mazeBoxRef.current?.querySelectorAll('.foodblue'),
           opacity: [0, 1],
           easing: 'linear',
           duration: 2000,
         }, 3000)
         .add({
-          targets: '#mazebox .foodred',
+          targets: mazeBoxRef.current?.querySelectorAll('.foodred'),
           opacity: [0, 1],
           easing: 'linear',
           duration: 2000,
         }, 3000)
         .add({
-          targets: '#mazebox .blue',
+          targets: mazeBoxRef.current?.querySelectorAll('.blue'),
           opacity: [0, 1],
           easing: 'linear',
           duration: 2000,
         }, 3500)
         .add({
-          targets: '#mazebox .red',
+          targets: mazeBoxRef.current?.querySelectorAll('.red'),
           opacity: [0, 1],
           easing: 'linear',
           duration: 2000,
         }, 3500)
         .add({
-          targets: '#mazebox .middleLine',
+          targets: mazeBoxRef.current?.querySelectorAll('.middleLine'),
           opacity: [0, 1],
           easing: 'linear',
           duration: 2000,
         }, 3500);
     }
-  }, [walls, game_uuid]);
+  }, [walls, game_uuid, animate, mazeBoxRef]);
 
 
   useEffect(() => {
-    console.log(gameover, whowins);
+    if (!gameover && hasWonScreen) {
+      let pathAnimation = anime.timeline()
+        .add({
+          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
+          fill: ["#000"],
+          easing: 'linear',
+          duration: 200
+        });
+    };
+    if (gameover) {
+      setHasWonScreen(true);
+    }
     if (gameover && whowins === 0) {
       let pathAnimation = anime.timeline()
         .add({
-          targets: '#mazebox #maze path',
-          fill: ["#faa", "rgb(94, 158, 217)"],
+          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
+          fill: ["#000", "rgb(94, 158, 217)"],
           easing: 'linear',
           duration: 200
         });
@@ -557,8 +573,8 @@ function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, g
     if (gameover && whowins === 1) {
       let pathAnimation = anime.timeline()
         .add({
-          targets: '#mazebox #maze path',
-          fill: ["#faa", "rgb(235, 90, 90)"],
+          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
+          fill: ["#000", "rgb(235, 90, 90)"],
           easing: 'linear',
           duration: 200
         });
@@ -566,17 +582,17 @@ function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, g
     if (gameover && whowins === 2) {
       let pathAnimation = anime.timeline()
         .add({
-          targets: '#mazebox #maze path',
-          fill: ["#faa", "#fff"],
+          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
+          fill: ["#000", "#ffa"],
           easing: 'linear',
           duration: 200
         });
     };
-  }, [gameover, whowins]);
+  }, [gameover, whowins, mazeBoxRef, hasWonScreen]);
 
 
   return (
-    <div id="mazebox" className="object-fill">
+    <div ref={mazeBoxRef} className="mazebox object-fill">
       <svg
         // width={width * cellSize}
         // height={height * cellSize}
@@ -653,10 +669,10 @@ function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, g
           ))}
         </AnimatePresence>
 
-          <Bot position={a} key="botA" color="blue" say={sayA} width={width} turnsAgo={turn}></Bot>
-          <Bot position={x} key="botX" color="red" say={sayX} width={width} turnsAgo={(turn + 3) % 4}></Bot>
-          <Bot position={b} key="botB" color="blue" say={sayB} width={width} turnsAgo={(turn + 2) % 4}></Bot>
-          <Bot position={y} key="botY" color="red" say={sayY} width={width} turnsAgo={(turn + 1) % 4}></Bot>
+          <Bot position={a} key="botA" color="blue" say={sayA} width={width} fadeIn={animate} turnsAgo={turn}></Bot>
+          <Bot position={x} key="botX" color="red" say={sayX} width={width} fadeIn={animate} turnsAgo={(turn + 3) % 4}></Bot>
+          <Bot position={b} key="botB" color="blue" say={sayB} width={width} fadeIn={animate} turnsAgo={(turn + 2) % 4}></Bot>
+          <Bot position={y} key="botY" color="red" say={sayY} width={width} fadeIn={animate} turnsAgo={(turn + 1) % 4}></Bot>
 
         {
           gameover ? (<>
