@@ -136,7 +136,7 @@ function PelitaTournament() {
         {state == "initial" && <button onClick={handleClick}>Start Movie</button>}
 
         {state == "movie" && <video autoPlay controls onEnded={handleClick}>
-          <source src={"Pelita Supercut ASPP Heraklion 2024.mp4"} type="video/mp4" />
+          <source src={"Pelita Supercut TU 2025.mp4"} type="video/mp4" />
         </video>
         }
 
@@ -145,10 +145,10 @@ function PelitaTournament() {
         {state == "match" &&
           <div>
             <h1 className="fixed top-0 left-0 z-20 w-full px-24 py-4 text-xl">
-              ᗧ Pelita Tournament 2024
+              ᗧ Pelita Tournament 2025
             </h1>
 
-            { gameState && <Pelita gameState={gameState} footer="ᗧ Pelita Tournament, ASPP 2024 Ηράκλειο" animate={true}></Pelita> }
+            { gameState && <Pelita gameState={gameState} footer="ᗧ Pelita Tournament, 2025 TU Berlin" animate={true}></Pelita> }
           </div>
         }
 
