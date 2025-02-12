@@ -1,36 +1,31 @@
-
-import type { Tuple4 } from './typeutils';
-
-// export interface RootMsg {
-//   __action__: string;
-//   __data__: ObserveData|null;
-// }
-
-type RootMsg = {
-  __action__: "observe",
-  __data__: ObserveData
-} | {
-  __action__: "SPEAK",
-  __data__: string
-} | {
-  __action__: "CLEAR",
-  __data__: null
-} | {
-  __action__: "INIT",
-  __data__: null
-};
+import type { Tuple4 } from "./typeutils";
 
 export type Pos = [number, number];
 
-export type { RootMsg };
+export type RootMsg =
+  | {
+      __action__: "observe";
+      __data__: ObserveGameState;
+    }
+  | {
+      __action__: "SPEAK";
+      __data__: string;
+    }
+  | {
+      __action__: "CLEAR";
+      __data__: null;
+    }
+  | {
+      __action__: "INIT";
+      __data__: null;
+    };
 
-export type ObserveDataL = ObserveData[];
-export interface ObserveData {
+export interface ObserveGameState {
   game_uuid: string;
   walls: Pos[];
   shape: Pos;
   food: Pos[];
-  food_age: (number[] | number)[][];
+  food_age: [Pos, number][];
   turn: number;
   round: number;
   gameover: boolean;
@@ -60,12 +55,13 @@ export interface ObserveData {
   num_errors: [number, number];
 }
 
+export type ObserveGameStateL = ObserveGameState[];
+
 export interface RequestedMove {
   previous_position: number[];
   requested_position: number[];
   success: boolean;
 }
-
 
 export interface GameStats {
   score: [number, number];
@@ -91,31 +87,31 @@ export interface GameState {
   turn: number;
 }
 
-export function conv_game_state(gs: ObserveData): GameState {
+export function conv_game_state(gs: ObserveGameState): GameState {
   // const bot_directions = gs.bots.map((pos, idx) => {
   //
   // });
 
   return {
-    "game_uuid": gs.game_uuid,
-    "shape": gs.shape,
-    "walls": gs.walls,
-    "food": gs.food,
-    "bots": gs.bots,
+    game_uuid: gs.game_uuid,
+    shape: gs.shape,
+    walls: gs.walls,
+    food: gs.food,
+    bots: gs.bots,
     // "bot_directions": bot_directions,
-    "say": gs.say,
-    "turn": gs.turn,
-    "round": gs.round,
-    "max_rounds": gs.max_rounds,
-    "team_names": gs.team_names,
-    "game_stats": {
-      "score": gs.score,
-      "num_errors": gs.num_errors,
-      "kills": gs.kills,
-      "deaths": gs.deaths,
-      "team_time": gs.team_time,
+    say: gs.say,
+    turn: gs.turn,
+    round: gs.round,
+    max_rounds: gs.max_rounds,
+    team_names: gs.team_names,
+    game_stats: {
+      score: gs.score,
+      num_errors: gs.num_errors,
+      kills: gs.kills,
+      deaths: gs.deaths,
+      team_time: gs.team_time,
     },
-    "whowins": gs.whowins,
-    "gameover": gs.gameover
+    whowins: gs.whowins,
+    gameover: gs.gameover,
   };
 }

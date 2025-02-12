@@ -1,6 +1,7 @@
 "use client"
 
 import React, {
+  LegacyRef,
   useEffect,
   useId,
   useMemo,
@@ -12,6 +13,7 @@ import anime from 'animejs/lib/anime.es.js';
 import { AnimatePresence, motion } from "framer-motion"
 
 type Pos = [number, number];
+type Color = "blue" | "red";
 
 const cellSize = 26; // Size of each cell in the SVG
 const offset = 0.2 * cellSize; // Offset for the outline
@@ -245,14 +247,17 @@ const createPath = (cluster: Pos[]) => {
 
 function usePrevious(value: any) {
   const ref = useRef();
+
   useEffect(() => {
-    ref.current = value; //assign the value of ref to the argument
-  }, [value]); //this code will run when the value of 'value' changes
-  return ref.current; //in the end, return the current ref value.
+    ref.current = value;
+  }, [value]);
+
+  return ref.current;
 }
 
-function Food({ position, color }: { position: Pos, color: string }) {
+function Food({ position, color }: { position: Pos, color: Color }) {
   const [x, y] = position;
+  const classes = color === "blue" ? "food blueFill" : "food redFill";
   return (
     <motion.circle
       cx={(0.5 + x) * cellSize}
@@ -260,7 +265,7 @@ function Food({ position, color }: { position: Pos, color: string }) {
 
       r={cellSize / 5}
       opacity={1}
-      className={color}
+      className={classes}
       // transition={{ duration: 1 }}
       initial={{ opacity: 1, r: cellSize / 5 }}
       // animate={{ opacity: 1 }}
@@ -288,7 +293,7 @@ function Food({ position, color }: { position: Pos, color: string }) {
 //   }, [delay]);
 // };
 
-function Pacman({ direction, mouthAngle, color }: { direction: number, mouthAngle: number, color: string }) {
+function Pacman({ direction, mouthAngle, color }: { direction: number, mouthAngle: number, color: Color }) {
 
   const pacmanPath = (angle: number) => {
     const angle_rad = angle / 180 * Math.PI;
@@ -298,9 +303,11 @@ function Pacman({ direction, mouthAngle, color }: { direction: number, mouthAngl
     return `M 0,0 L ${x},${-y} A ${radius},${radius} 0 1 0 ${x},${y} Z`;
   }
 
+  const classes = color === "blue" ? "pacman blueFill" : "pacman redFill";
+
   return (
     <g transform={ `rotate(${direction})` }
-      className={color}>
+      className={classes}>
       <path
         d={pacmanPath(mouthAngle)}
         stroke="black"
@@ -315,18 +322,18 @@ function Pacman({ direction, mouthAngle, color }: { direction: number, mouthAngl
     </g>)
 }
 
-function Ghost({ direction, color }: { direction: number, color: string }) {
+function Ghost({ direction, color }: { direction: number, color: Color }) {
+  const classes = color === "blue" ? "ghost blueFill" : "ghost redFill";
+
   return (<g
   id="ghost"
-  className={`${color} ghost`}
+  className={classes}
 >
 
 {/* Round path: // M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 C 8 9 6.6667 5.6 6 5.6 S 4.6667 8.19 4 8.19 S 2.6667 5.6 2 5.6 S 0.6667 8.19 0 8.19 S -1.3333 5.6 -2 5.6 S -3.3333 8.19 -4 8.19 S -5.3333 5.6 -6 5.6 S -8 9 -8 8 C -8 5.3333 -8 2.6667 -8 0 Z  */}
 {/* Straight path: // M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 L 6 5.6 L 4 8 L 2 5.6 L 0 8 L -2 5.6 L -4 8 L -6 5.6 L -8 8 L -8 0 Z */}
 
   <path d="M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 C 8 9 6.6667 5.6 6 5.6 S 4.6667 8.19 4 8.19 S 2.6667 5.6 2 5.6 S 0.6667 8.19 0 8.19 S -1.3333 5.6 -2 5.6 S -3.3333 8.19 -4 8.19 S -5.3333 5.6 -6 5.6 S -8 9 -8 8 C -8 5.3333 -8 2.6667 -8 0 Z"
-
-
     stroke="black"
     strokeWidth={0.2}
     opacity={0.9}
@@ -347,7 +354,7 @@ M 1.5 0 C 1.9 0 2.2 -0.4 2.2 -0.9 C 2.2 -1.5 1.9 -1.9 1.5 -1.9 C 1.1 -1.9 0.8 -1
 </g>);
 }
 
-function Bot({ position, color, say, width, turnsAgo, fadeIn }: { position: Pos, color: string, say: string, width: number, turnsAgo: number, fadeIn: boolean }) {
+function Bot({ position, color, say, width, turnsAgo, fadeIn }: { position: Pos, color: Color, say: string, width: number, turnsAgo: number, fadeIn: boolean }) {
   const leftSide = position[0] < width / 2;
   const inHomezone = () => {
     switch (color) {
@@ -366,6 +373,8 @@ function Bot({ position, color, say, width, turnsAgo, fadeIn }: { position: Pos,
 
   const mouthAngle = 50; // Math.abs(50 * Math.sin(mouthAngleTL));
 
+  const self = useRef<SVGGElement>(null);
+
   useEffect(() => {
     if (oldPosition) {
       const dx = position[0] - oldPosition[0];
@@ -377,25 +386,9 @@ function Bot({ position, color, say, width, turnsAgo, fadeIn }: { position: Pos,
     }
   }, [position, oldPosition]);
 
-  useEffect(() => {
-    if (fadeIn)
-    anime.timeline()
-      .add({
-        targets: '.bot .blue',
-        opacity: [0, 1],
-        easing: 'linear',
-        duration: 2000,
-      }, 3500)
-      .add({
-        targets: '.bot .red',
-        opacity: [0, 1],
-        easing: 'linear',
-        duration: 2000,
-      }, 3500);
-  }, [fadeIn]);
-
   return (
     <motion.g
+      ref={self}
       transform={ `translate(${(position[0] + 0.5) * cellSize} ${(position[1] + 0.5) * cellSize}) scale(${cellSize / 16})` }
       className="bot"
       animate={{
@@ -412,8 +405,8 @@ function Bot({ position, color, say, width, turnsAgo, fadeIn }: { position: Pos,
     >
       {
         inHomezone()
-        ? (<Ghost direction={direction} color={`${color} ghost`}></Ghost>)
-        : (<Pacman direction={direction} mouthAngle={mouthAngle} color={`${color} pacman`}></Pacman>)
+        ? (<Ghost direction={direction} color={color}></Ghost>)
+        : (<Pacman direction={direction} mouthAngle={mouthAngle} color={color}></Pacman>)
       }
       <text y="-10" className="sayBg">{say}</text>
       <text y="-10" className="say">{say}</text>
@@ -442,7 +435,7 @@ function Walls({ shape, walls }: { shape: Pos, walls: Pos[] }) {
         height={cellSize}
         opacity="0"
         // fill="lightblue"
-        stroke="lightgrey"
+        stroke="#d3d3d3"
       />
     ))}
     {clusters.map((cluster, index) => (
@@ -487,7 +480,7 @@ function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, g
 
   const mazeBoxRef = useRef<HTMLDivElement>(null);
   // used so that we can revert the animation
-  const [hasWonScreen, setHasWonScreen] = useState(false);
+  const [hasGameOverScreen, setHasGameOverScreen] = useState(false);
 
   useEffect(() => {
     if (game_uuid && animate) {
@@ -515,25 +508,13 @@ function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, g
           duration: 2000
         }, 4000)
         .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.foodblue'),
+          targets: mazeBoxRef.current?.querySelectorAll('.foodElems'),
           opacity: [0, 1],
           easing: 'linear',
           duration: 2000,
         }, 3000)
         .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.foodred'),
-          opacity: [0, 1],
-          easing: 'linear',
-          duration: 2000,
-        }, 3000)
-        .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.blue'),
-          opacity: [0, 1],
-          easing: 'linear',
-          duration: 2000,
-        }, 3500)
-        .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.red'),
+          targets: mazeBoxRef.current?.querySelectorAll('.botElems'),
           opacity: [0, 1],
           easing: 'linear',
           duration: 2000,
@@ -544,12 +525,29 @@ function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, g
           easing: 'linear',
           duration: 2000,
         }, 3500);
+    };
+
+    if (!animate) {
+      let pathAnimation = anime.timeline()
+      .add({
+        targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
+        //fill: ['rgb(214, 219, 220)', "#faa"], // ffa
+        fillOpacity: [0, 0.7], // ffa
+        easing: 'linear',
+        duration: 0
+      }, 0)
+      .add({
+        targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
+        strokeWidth: 0,
+        easing: 'linear',
+        duration: 0
+      }, 0)
     }
-  }, [walls, game_uuid, animate, mazeBoxRef]);
+  }, [game_uuid, animate, mazeBoxRef]);
 
 
   useEffect(() => {
-    if (!gameover && hasWonScreen) {
+    if (!gameover && hasGameOverScreen) {
       let pathAnimation = anime.timeline()
         .add({
           targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
@@ -558,37 +556,24 @@ function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, g
           duration: 200
         });
     };
-    if (gameover) {
-      setHasWonScreen(true);
-    }
-    if (gameover && whowins === 0) {
+    if (gameover && whowins !== null) {
+      setHasGameOverScreen(true);
+
+      let targetColor = {
+        0: "rgb(94, 158, 217)",
+        1: "rgb(235, 90, 90)",
+        2: "#ffa" // draw
+      }[whowins];
+
       let pathAnimation = anime.timeline()
         .add({
           targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
-          fill: ["#000", "rgb(94, 158, 217)"],
+          fill: ["#000", targetColor],
           easing: 'linear',
           duration: 200
         });
     };
-    if (gameover && whowins === 1) {
-      let pathAnimation = anime.timeline()
-        .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
-          fill: ["#000", "rgb(235, 90, 90)"],
-          easing: 'linear',
-          duration: 200
-        });
-    };
-    if (gameover && whowins === 2) {
-      let pathAnimation = anime.timeline()
-        .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
-          fill: ["#000", "#ffa"],
-          easing: 'linear',
-          duration: 200
-        });
-    };
-  }, [gameover, whowins, mazeBoxRef, hasWonScreen]);
+  }, [gameover, whowins, mazeBoxRef, hasGameOverScreen]);
 
 
   return (
@@ -606,18 +591,10 @@ function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, g
             stroke-linecap: round;
             stroke-width: 3;
         }
-        .foodblue {
-            // stroke: black;
+        .blueFill {
             fill: rgb(94, 158, 217);
         }
-        .foodred {
-            // stroke: black;
-            fill: rgb(235, 90, 90);
-        }
-        .blue {
-            fill: rgb(94, 158, 217);
-        }
-        .red {
+        .redFill {
             fill: rgb(235, 90, 90);
         }
         .blueLine {
@@ -663,16 +640,20 @@ function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, g
         </defs>
 
         <Walls shape={shape} walls={walls}></Walls>
-        <AnimatePresence>
-          {food.map(([x, y], index) => (
-            <Food key={`${x},${y}`} position={[x, y]} color={x < width / 2 ? "foodblue" : "foodred"}></Food>
-          ))}
-        </AnimatePresence>
+        <g className="foodElems">
+          <AnimatePresence>
+            {food.map(([x, y], index) => (
+              <Food key={`${x},${y}`} position={[x, y]} color={x < width / 2 ? "blue" : "red"}></Food>
+            ))}
+          </AnimatePresence>
+        </g>
 
+        <g className="botElems">
           <Bot position={a} key="botA" color="blue" say={sayA} width={width} fadeIn={animate} turnsAgo={turn}></Bot>
           <Bot position={x} key="botX" color="red" say={sayX} width={width} fadeIn={animate} turnsAgo={(turn + 3) % 4}></Bot>
           <Bot position={b} key="botB" color="blue" say={sayB} width={width} fadeIn={animate} turnsAgo={(turn + 2) % 4}></Bot>
           <Bot position={y} key="botY" color="red" say={sayY} width={width} fadeIn={animate} turnsAgo={(turn + 1) % 4}></Bot>
+        </g>
 
         {
           gameover ? (<>
