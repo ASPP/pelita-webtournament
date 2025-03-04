@@ -133,7 +133,7 @@ function PelitaTournament() {
     <main className={`min-h-screen flex-col items-center justify-between px-24 py-12 ${crt}`}>
       <div className="z-10 w-full max-w-screen items-center justify-between font-mono text-sm">
 
-        {state == "initial" && <button onClick={handleClick}>Start Movie</button>}
+        {state == "initial" && <button onClick={handleClick}>Start Pelita Tournament</button>}
 
         {state == "movie" && <video autoPlay controls onEnded={handleClick}>
           <source src={"Pelita Supercut TU 2025.mp4"} type="video/mp4" />
