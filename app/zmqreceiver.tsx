@@ -1,50 +1,68 @@
-'use client'
+'use client';
 
-import React, { useEffect, useState } from 'react';
-import { conv_game_state } from './pelita_msg';
-import type { RootMsg, GameState } from './pelita_msg';
 import * as zmq from 'jszmq';
+import { useEffect, useState } from 'react';
 
+import type { RootMsg, GameState, TournamentMetadata } from './pelita_msg';
 
-const ZMQReceiver = ({ url, sendGameState, sendMessage, sendClearPage }: { url: string,
-  sendGameState: (gs: GameState) => any,
-  sendMessage: (msg: string) => any,
-  sendClearPage: () => any
- }
+import { conv_game_state } from './pelita_msg';
 
-) => {
+const ZMQReceiver = ({
+  url,
+  sendGameState,
+  sendMessage,
+  sendClearPage,
+  setTournamentMetadata,
+}: {
+  url: string;
+  sendGameState: (gs: GameState) => void;
+  sendMessage?: (msg: string) => void;
+  sendClearPage?: () => void;
+  setTournamentMetadata?: (tournamentMetadata: TournamentMetadata) => void;
+}) => {
   const [isConnected, setIsConnected] = useState(false);
   const [messages, setMessages] = useState<string[]>([]);
 
   useEffect(() => {
     console.log('hi');
+    console.log('Connecting socket: ', url);
     const socket = zmq.socket('sub');
     socket.options.reconnectInterval = 1000;
     socket.connect(url);
     socket.subscribe('');
 
     function onConnect() {
+      console.log('connect');
       setIsConnected(true);
     }
 
     function onDisconnect() {
+      console.log('disconnect');
       setIsConnected(false);
     }
 
-    const handleMessage = (message: any) => {
-      setMessages((prevMessages) => [/*...prevMessages, */message.toString()]);
-      let parsed = JSON.parse(message) as RootMsg;
+    const handleMessage = (message: string) => {
+      setMessages(prevMessages => [/*...prevMessages, */ message]);
+      const parsed = JSON.parse(message) as RootMsg;
       console.log(parsed);
       if (parsed.__action__ === 'SPEAK') {
         // Replacing all ANSI code here
-        sendMessage(parsed['__data__'].replaceAll(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, ''));
+        sendMessage?.(
+          parsed.__data__.replaceAll(
+            /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
+            '',
+          ),
+        );
       } else if (parsed.__action__ === 'CLEAR') {
-        sendClearPage();
+        sendClearPage?.();
       } else if (parsed.__action__ === 'observe') {
-        let conv = conv_game_state(parsed.__data__);
+        const conv = conv_game_state(parsed.__data__);
         sendGameState(conv);
       } else if (parsed.__action__ === 'INIT') {
-        sendClearPage();
+        const metadata = parsed.__data__;
+        console.log('Setting metadata', metadata);
+        setTournamentMetadata?.(metadata);
+        sendClearPage?.();
       }
     };
 
@@ -53,15 +71,17 @@ const ZMQReceiver = ({ url, sendGameState, sendMessage, sendClearPage }: { url: 
     socket.on('message', handleMessage);
 
     return () => {
+      console.log('bye');
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('message', handleMessage);
       socket.unsubscribe('');
       socket.close();
     };
-  }, [url, sendClearPage, sendGameState, sendMessage]); //, sendGameState, sendClearPage, sendMessage]);
+  }, [url, sendGameState, sendMessage, sendClearPage, setTournamentMetadata]);
 
-  return (<></>
+  return (
+    <></>
     // <footer className="fixed bottom-0 left-0 z-20 w-full p-4 bg-white border-t border-gray-200 shadow md:flex md:items-center md:justify-between md:p-6 dark:bg-gray-800 dark:border-gray-600">
     //   <h2 className='text-xs text-slate-300'>ZeroMQ Messages:</h2>
     //   <ul>

@@ -1,12 +1,36 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
 
-const inter = Inter({ subsets: ["latin"] });
+import { Cascadia_Code, Abril_Fatface } from 'next/font/google';
+
+import './globals.css';
+
+function DevIndicator() {
+  if (process.env.NODE_ENV === 'production') return null;
+
+  return <div className="dev-indicator" />;
+}
+
+// const roboto_mono = Roboto_Mono({
+//   subsets: ['latin'],
+//   display: 'swap',
+//   variable: '--font-roboto-mono',
+// })
+
+const cascadiaCode = Cascadia_Code({
+  subsets: ['latin', 'cyrillic'],
+  display: 'swap',
+  variable: '--font-cascadia-code',
+  weight: '400',
+});
+
+const abrilFatface = Abril_Fatface({
+  weight: '400',
+  variable: '--font-abril-fatface',
+});
 
 export const metadata: Metadata = {
-  title: "Pelita Tournament Heraklion 2024",
-  description: "ASPP2024",
+  title: 'Pelita Tournament',
+  description: 'ASPP2025',
 };
 
 export default function RootLayout({
@@ -16,7 +40,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={`${cascadiaCode.variable} ${abrilFatface.variable}`}>
+        <DevIndicator />
+        {children}
+      </body>
     </html>
   );
 }

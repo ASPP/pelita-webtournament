@@ -1,10 +1,8 @@
-//import PelitaTournament from "./tournament";
-
 "use client"
 
-import { useEffect, useMemo, useState } from "react";
-import Pelita from "../pelita";
-import { conv_game_state, ObserveGameStateL } from "../pelita_msg";
+
+import { ObserveGameStateL } from "@/app/pelita_msg";
+import PelitaReplay from "@/app/pelita_replay";
 
 import match01 from "./round1-match01-20240831-185932.json";
 // import match02 from "./round1-match02-20240831-190026.json";
@@ -21,7 +19,6 @@ import match01 from "./round1-match01-20240831-185932.json";
 // import matchb_03 from "./round2-match03-20240831-191322.json";
 // import matchb_04 from "./round2-match04-20240831-191433.json";
 
-
 const match02: ObserveGameStateL = [];
 const match03: ObserveGameStateL = [];
 const match04: ObserveGameStateL = [];
@@ -36,79 +33,9 @@ const matchb_02: ObserveGameStateL = [];
 const matchb_03: ObserveGameStateL = [];
 const matchb_04: ObserveGameStateL = [];
 
-
-
-// function PelitaReplayFile({src}: {src: string}) {
-//   const file = await fs.readFile(process.cwd() + src, 'utf8');
-//   const data = JSON.parse(file);
-//   return (<PelitaReplay data={data}></PelitaReplay>);
-// }
-
-function PelitaReplay({data} : {data: any[]}) {
-  const [state, setState] = useState(0);
-  const [started, setStarted] = useState(false);
-  let dataForced = data ; //as ObserveGameStateL;
-  const matchConv = useMemo(() => dataForced.map(conv_game_state), [dataForced]);
-
-  useEffect(() => {
-    const id = setTimeout(() => {
-      started &&
-      setState((state) => {
-        if (state + 1 < data.length)
-          return state + 1
-        else {
-          clearTimeout(id);
-          setStarted(false);
-          return state;
-        }
-    });
-    }, 40);
-    return () => clearTimeout(id);
-  }, [state, started, data.length])
-
-  function back() {
-    setStarted(false);
-    setState(s => Math.max(s - 1, 0));
-  }
-
-  function step() {
-    setStarted(false);
-    setState(s => Math.min(s + 1, data.length - 1));
-  }
-
-  if (data.length == 0) return (<p><i>No match data</i></p>);
-
-  return (
-    <div className="">
-    <Pelita animate={false} footer="" gameState={matchConv[state]}></Pelita>
-
-    <div className="flex flex-row gap-4 items-center justify-between">
-    <button
-      className="basis-1/4 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-1 px-3 border border-blue-500 hover:border-transparent rounded disabled:border-white-500"
-      onClick={() => setState(0)}
-      disabled={!state}
-      >rewind</button>
-    <button
-      className="basis-1/4 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-1 px-3 border border-blue-500 hover:border-transparent rounded"
-      onClick={back}
-      >back</button>
-    <button
-      className="basis-1/4 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-1 px-3 border border-blue-500 hover:border-transparent rounded"
-      onClick={() => setStarted(!started)}
-      >{ started ? `pause` : `play` }</button>
-    <button
-      className="basis-1/4 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-1 px-3 border border-blue-500 hover:border-transparent rounded"
-      onClick={step}
-      >step</button>
-    </div>
-    </div>
-  );
-}
-
-
 export default function Home() {
   return (<>
-    <main className={`max-w-3xl mx-auto pt-10 xl:max-w-none xl:ml-0 xl:mr-[15.5rem] xl:pr-16 px-24 py-12`}>
+    <main className={`max-w-3xl mx-auto pt-10 xl:max-w-none xl:ml-0 xl:mr-[15.5rem] xl:pr-16 px-4 lg:px-24 py-4 lg:py-12 bg-white`}>
       <div className="font-mono text-sm">
 
         Καλησπέρα Rike, I am the Python drone. I am here to serve you.<br />

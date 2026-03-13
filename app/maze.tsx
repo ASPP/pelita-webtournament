@@ -1,24 +1,15 @@
-"use client"
+'use client';
 
-import React, {
-  LegacyRef,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState
-} from "react";
+import { animate, createScope, createTimeline, Scope, svg, Timeline } from 'animejs';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
-import anime from 'animejs/lib/anime.es.js';
-import { AnimatePresence, motion } from "framer-motion"
-
-type Pos = [number, number];
-type Color = "blue" | "red";
+import { Pos, Side } from './pelita_msg';
 
 const cellSize = 26; // Size of each cell in the SVG
 const offset = 0.2 * cellSize; // Offset for the outline
-let radius = 0.5 * cellSize - offset;
-let radius_inner = offset;
+const radius = 0.5 * cellSize - offset;
+const radius_inner = offset;
 
 const findClusters = (shape: Pos, walls: Pos[]) => {
   const [width, height] = shape;
@@ -26,13 +17,20 @@ const findClusters = (shape: Pos, walls: Pos[]) => {
   const visited = new Set<string>();
 
   const directions = [
-    [0, 1], [1, 0], [0, -1], [-1, 0]
+    [0, 1],
+    [1, 0],
+    [0, -1],
+    [-1, 0],
   ];
 
   const inBounds = (x: number, y: number) => x >= 0 && x < width && y >= 0 && y < height;
 
   const dfs = (x: number, y: number, cluster: Pos[]) => {
-    if (!inBounds(x, y) || visited.has(`${x},${y}`) || !walls.some(([bx, by]) => bx === x && by === y)) {
+    if (
+      !inBounds(x, y) ||
+      visited.has(`${x},${y}`) ||
+      !walls.some(([bx, by]) => bx === x && by === y)
+    ) {
       return;
     }
     visited.add(`${x},${y}`);
@@ -57,7 +55,6 @@ const findClusters = (shape: Pos, walls: Pos[]) => {
 const createPath = (cluster: Pos[]) => {
   const visitedCorners = new Set<string>();
   const visitedCells = new Set<string>();
-
 
   /* Corners:
 
@@ -86,29 +83,41 @@ const createPath = (cluster: Pos[]) => {
   const refPoint7 = [cellSize, offset];
 
   const refPoints = [
-    refPoint0, refPoint1, refPoint2, refPoint3,
-    refPoint4, refPoint5, refPoint6, refPoint7
+    refPoint0,
+    refPoint1,
+    refPoint2,
+    refPoint3,
+    refPoint4,
+    refPoint5,
+    refPoint6,
+    refPoint7,
   ];
 
-  type PathMove = { next: [Pos, number], path: string };
+  interface PathMove {
+    next: [Pos, number];
+    path: string;
+  }
 
   const makeNextLine = (x: number, y: number, nextRefPoint: number): PathMove => {
     const px = x * cellSize + refPoints[nextRefPoint][0];
     const py = y * cellSize + refPoints[nextRefPoint][1];
     return { next: [[x, y], nextRefPoint], path: `L ${px},${py}` };
-  }
+  };
 
   const makeNextCurve = (x: number, y: number, nextRefPoint: number): PathMove => {
     const px = x * cellSize + refPoints[nextRefPoint][0];
     const py = y * cellSize + refPoints[nextRefPoint][1];
     return { next: [[x, y], nextRefPoint], path: `A ${radius},${radius} 0 0 0 ${px},${py}` };
-  }
+  };
 
   const makeNextCurveInner = (x: number, y: number, nextRefPoint: number): PathMove => {
     const px = x * cellSize + refPoints[nextRefPoint][0];
     const py = y * cellSize + refPoints[nextRefPoint][1];
-    return { next: [[x, y], nextRefPoint], path: `A ${radius_inner},${radius_inner} 0 0 1 ${px},${py}` };
-  }
+    return {
+      next: [[x, y], nextRefPoint],
+      path: `A ${radius_inner},${radius_inner} 0 0 1 ${px},${py}`,
+    };
+  };
 
   const move = (x: number, y: number, corner: number): PathMove | undefined => {
     switch (corner) {
@@ -198,23 +207,23 @@ const createPath = (cluster: Pos[]) => {
       `l ${-offset} 0`,
       `a 1,1 0 0 0 0,${cellSize - 2 * offset}`,
       `l ${2 * offset} 0`,
-      `a 1,1 0 0 0 0,${- cellSize + 2 * offset}`,
-      `Z`
-    ].join(" ");
+      `a 1,1 0 0 0 0,${-cellSize + 2 * offset}`,
+      `Z`,
+    ].join(' ');
   }
 
-  const pathCommands = cluster.flatMap((startCell) => {
+  const pathCommands = cluster.flatMap(startCell => {
     // iterate through all possible starting points in all cells (unless already visited)
     const paths = [0, 1, 2, 3].map(startRefPoint => {
       let [x, y] = startCell;
-      if (visitedCorners.has(`${x},${y},${startRefPoint}`)) return "";
+      if (visitedCorners.has(`${x},${y},${startRefPoint}`)) return '';
 
       let refPoint = startRefPoint;
 
       const px = x * cellSize + refPoints[refPoint][0];
       const py = y * cellSize + refPoints[refPoint][1];
 
-      let pathCommands = [];
+      const pathCommands = [];
       pathCommands.push([`M ${px},${py}`]);
 
       do {
@@ -226,27 +235,30 @@ const createPath = (cluster: Pos[]) => {
         visitedCorners.add(node);
         visitedCells.add(`${x},${y}`);
 
-        let pathMove = move(x, y, refPoint);
-        if (!pathMove) return "";
-        let path = "";
-        ({ next: [[x, y], refPoint], path: path } = pathMove);
+        const pathMove = move(x, y, refPoint);
+        if (!pathMove) return '';
+        let path = '';
+        ({
+          next: [[x, y], refPoint],
+          path: path,
+        } = pathMove);
 
         pathCommands.push([path]);
       } while (!(x === startCell[0] && y === startCell[1] && refPoint === startRefPoint));
 
-      pathCommands.push(["Z"]); // Close the path
+      pathCommands.push(['Z']); // Close the path
 
-      const joined = pathCommands.join(" ");
+      const joined = pathCommands.join(' ');
       return joined;
     });
     return paths;
   });
 
-  return pathCommands.join(" ");
+  return pathCommands.join(' ');
 };
 
-function usePrevious(value: any) {
-  const ref = useRef(null);
+function usePrevious<T>(value: T) {
+  const ref = useRef<T>(null);
 
   useEffect(() => {
     ref.current = value;
@@ -255,23 +267,22 @@ function usePrevious(value: any) {
   return ref.current;
 }
 
-function Food({ position, color }: { position: Pos, color: Color }) {
+function Food({ position, side }: { position: Pos; side: Side }) {
   const [x, y] = position;
-  const classes = color === "blue" ? "food blueFill" : "food redFill";
+  const classes = side === 'blue' ? 'food fill-blue' : 'food fill-red';
+  const exitAnim = { opacity: 0, scale: 5 };
   return (
     <motion.circle
       cx={(0.5 + x) * cellSize}
       cy={(0.5 + y) * cellSize}
-
+      stroke="black"
       r={cellSize / 5}
       opacity={1}
       className={classes}
-      // transition={{ duration: 1 }}
-      initial={{ opacity: 1, r: cellSize / 5 }}
-      // animate={{ opacity: 1 }}
-      exit={{ opacity: 0, r: cellSize }}
+      initial={false}
+      exit={exitAnim}
     />
-  )
+  );
 }
 
 // // from https://www.30secondsofcode.org/react/s/use-interval-explained/
@@ -293,78 +304,84 @@ function Food({ position, color }: { position: Pos, color: Color }) {
 //   }, [delay]);
 // };
 
-function Pacman({ direction, mouthAngle, color }: { direction: number, mouthAngle: number, color: Color }) {
-
+function Pacman({
+  direction,
+  mouthAngle,
+  side,
+}: {
+  direction: number;
+  mouthAngle: number;
+  side: Side;
+}) {
   const pacmanPath = (angle: number) => {
-    const angle_rad = angle / 180 * Math.PI;
+    const angle_rad = (angle / 180) * Math.PI;
     const radius = 8;
     const x = radius * Math.cos(angle_rad / 2);
     const y = radius * Math.sin(angle_rad / 2);
     return `M 0,0 L ${x},${-y} A ${radius},${radius} 0 1 0 ${x},${y} Z`;
-  }
+  };
 
-  const classes = color === "blue" ? "pacman blueFill" : "pacman redFill";
+  const classes = side === 'blue' ? 'pacman fill-blue' : 'pacman fill-red';
 
   return (
-    <g transform={ `rotate(${direction})` }
-      className={classes}>
-      <path
-        d={pacmanPath(mouthAngle)}
-        stroke="black"
-        strokeWidth={0.2}
-      />
-      <motion.circle cx={2.7} cy={direction < 160 ? -4.5 : 4.5} r={1.5}
+    <g transform={`rotate(${direction})`} className={classes}>
+      <path d={pacmanPath(mouthAngle)} stroke="black" strokeWidth={0.2} />
+      <motion.circle
+        cx={2.7}
+        cy={direction < 160 ? -4.5 : 4.5}
+        r={1.5}
         className={`eye`}
         stroke="black"
         fill="yellow"
         strokeWidth={0.2}
       />
-    </g>)
+    </g>
+  );
 }
 
-function Ghost({ direction, color }: { direction: number, color: Color }) {
-  const classes = color === "blue" ? "ghost blueFill" : "ghost redFill";
+function Ghost({ side }: { side: Side }) {
+  const classes = side === 'blue' ? 'ghost fill-blue' : 'ghost fill-red';
 
-  return (<g
-  id="ghost"
-  className={classes}
->
+  return (
+    <g className={classes}>
+      {/* Round path: // M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 C 8 9 6.6667 5.6 6 5.6 S 4.6667 8.19 4 8.19 S 2.6667 5.6 2 5.6 S 0.6667 8.19 0 8.19 S -1.3333 5.6 -2 5.6 S -3.3333 8.19 -4 8.19 S -5.3333 5.6 -6 5.6 S -8 9 -8 8 C -8 5.3333 -8 2.6667 -8 0 Z  */}
+      {/* Straight path: // M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 L 6 5.6 L 4 8 L 2 5.6 L 0 8 L -2 5.6 L -4 8 L -6 5.6 L -8 8 L -8 0 Z */}
 
-{/* Round path: // M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 C 8 9 6.6667 5.6 6 5.6 S 4.6667 8.19 4 8.19 S 2.6667 5.6 2 5.6 S 0.6667 8.19 0 8.19 S -1.3333 5.6 -2 5.6 S -3.3333 8.19 -4 8.19 S -5.3333 5.6 -6 5.6 S -8 9 -8 8 C -8 5.3333 -8 2.6667 -8 0 Z  */}
-{/* Straight path: // M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 L 6 5.6 L 4 8 L 2 5.6 L 0 8 L -2 5.6 L -4 8 L -6 5.6 L -8 8 L -8 0 Z */}
-
-  <path d="M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 C 8 9 6.6667 5.6 6 5.6 S 4.6667 8.19 4 8.19 S 2.6667 5.6 2 5.6 S 0.6667 8.19 0 8.19 S -1.3333 5.6 -2 5.6 S -3.3333 8.19 -4 8.19 S -5.3333 5.6 -6 5.6 S -8 9 -8 8 C -8 5.3333 -8 2.6667 -8 0 Z"
-    stroke="black"
-    strokeWidth={0.2}
-    opacity={0.9}
-  ></path>
-  <path d="M -3.2 1.1 C -2.2 1.1 -1.4 0.1 -1.4 -1.2 C -1.4 -2.5 -2.2 -3.6 -3.2 -3.6 C -4.2 -3.6 -5.1 -2.5 -5.1 -1.2 C -5.1 0.1 -4.2 1.1 -3.2 1.1 Z
+      <path
+        d="M -8 0 C -8 -4.4 -4.4 -8 0 -8 C 4.4 -8 8 -4.4 8 0 L 8 8 C 8 9 6.6667 5.6 6 5.6 S 4.6667 8.19 4 8.19 S 2.6667 5.6 2 5.6 S 0.6667 8.19 0 8.19 S -1.3333 5.6 -2 5.6 S -3.3333 8.19 -4 8.19 S -5.3333 5.6 -6 5.6 S -8 9 -8 8 C -8 5.3333 -8 2.6667 -8 0 Z"
+        stroke="black"
+        strokeWidth={0.2}
+        opacity={0.9}
+      ></path>
+      <path
+        d="M -3.2 1.1 C -2.2 1.1 -1.4 0.1 -1.4 -1.2 C -1.4 -2.5 -2.2 -3.6 -3.2 -3.6 C -4.2 -3.6 -5.1 -2.5 -5.1 -1.2 C -5.1 0.1 -4.2 1.1 -3.2 1.1 Z
 M 1.8 1.1 C 2.8 1.1 3.6 0.1 3.6 -1.2 C 3.6 -2.5 2.8 -3.6 1.8 -3.6 C 0.8 -3.6 -0 -2.5 -0 -1.2 C -0 0.1 0.8 1.1 1.8 1.1 Z"
-    stroke="black"
-    strokeWidth={0.2}
-    fill="white"
-  ></path>
-  <path d="M -3.5 0 C -3.1 0 -2.8 -0.4 -2.8 -0.9 C -2.8 -1.5 -3.1 -1.9 -3.5 -1.9 C -3.9 -1.9 -4.2 -1.5 -4.2 -0.9 C -4.2 -0.4 -3.9 0 -3.5 0 Z
+        stroke="black"
+        strokeWidth={0.2}
+        fill="white"
+      ></path>
+      <path
+        d="M -3.5 0 C -3.1 0 -2.8 -0.4 -2.8 -0.9 C -2.8 -1.5 -3.1 -1.9 -3.5 -1.9 C -3.9 -1.9 -4.2 -1.5 -4.2 -0.9 C -4.2 -0.4 -3.9 0 -3.5 0 Z
 M 1.5 0 C 1.9 0 2.2 -0.4 2.2 -0.9 C 2.2 -1.5 1.9 -1.9 1.5 -1.9 C 1.1 -1.9 0.8 -1.5 0.8 -0.9 C 0.8 -0.4 1.1 0 1.5 0 Z"
-    stroke="black"
-    strokeWidth={0.2}
-    fill="black"
-  >
-  </path>
-</g>);
+        stroke="black"
+        strokeWidth={0.2}
+        fill="black"
+      ></path>
+    </g>
+  );
 }
 
-function Bot({ position, color, say, width, turnsAgo, fadeIn }: { position: Pos, color: Color, say: string, width: number, turnsAgo: number, fadeIn: boolean }) {
+function Bot({ position, side, width }: { position: Pos; side: Side; width: number }) {
   const leftSide = position[0] < width / 2;
   const inHomezone = () => {
-    switch (color) {
-      case "blue":
+    switch (side) {
+      case 'blue':
         return leftSide;
 
-      case "red":
+      case 'red':
         return !leftSide;
     }
-  }
+  };
   const [direction, setDirection] = useState(leftSide ? 0 : 180);
   const oldPosition = usePrevious(position);
 
@@ -389,294 +406,522 @@ function Bot({ position, color, say, width, turnsAgo, fadeIn }: { position: Pos,
   return (
     <motion.g
       ref={self}
-      transform={ `translate(${(position[0] + 0.5) * cellSize} ${(position[1] + 0.5) * cellSize}) scale(${cellSize / 16})` }
+      transform={`translate(${(position[0] + 0.5) * cellSize} ${(position[1] + 0.5) * cellSize}) scale(${cellSize / 16})`}
       className="bot"
       animate={{
         x: (position[0] + 0.5) * cellSize,
         y: (position[1] + 0.5) * cellSize,
-        scale: cellSize / 16
+        scale: cellSize / 16,
       }}
-      initial={{
-        x: (position[0] + 0.5) * cellSize,
-        y: (position[1] + 0.5) * cellSize,
-        scale: cellSize / 16
-      }}
+      initial={false}
+      // initial={{
+      //   x: (position[0] + 0.5) * cellSize,
+      //   y: (position[1] + 0.5) * cellSize,
+      //   scale: cellSize / 16
+      // }}
       transition={{ duration: 0.1 }}
     >
-      {
-        inHomezone()
-        ? (<Ghost direction={direction} color={color}></Ghost>)
-        : (<Pacman direction={direction} mouthAngle={mouthAngle} color={color}></Pacman>)
-      }
-      <text y="-10" className="sayBg">{say}</text>
-      <text y="-10" className="say">{say}</text>
+      {inHomezone() ? (
+        <Ghost side={side}></Ghost>
+      ) : (
+        <Pacman direction={direction} mouthAngle={mouthAngle} side={side}></Pacman>
+      )}
     </motion.g>
-  )
-}
-
-function Walls({ shape, walls }: { shape: Pos, walls: Pos[] }) {
-  const clusters = useMemo(() => findClusters(shape, walls), [shape, walls]);
-  const [width, height] = shape;
-
-  return (
-    <g className="maze">
-      <line x1={(width) * cellSize / 2} y1={0.3 * cellSize}
-            x2={width * cellSize / 2} y2={(height - 0.3) * cellSize} className="middleLine blackLine" />
-      <line x1={(width - 0.1)  * cellSize / 2} y1={0.3 * cellSize}
-            x2={(width - 0.1) * cellSize / 2} y2={(height - 0.3) * cellSize} className="middleLine blueLine" />
-      <line x1={(width + 0.1)  * cellSize / 2} y1={0.3 * cellSize}
-            x2={(width + 0.1) * cellSize / 2} y2={(height - 0.3) * cellSize} className="middleLine redLine" />
-    {walls.map(([x, y], index) => (
-      <rect
-        key={`${x},${y}`}
-        x={x * cellSize}
-        y={y * cellSize}
-        width={cellSize}
-        height={cellSize}
-        opacity="0"
-        // fill="lightblue"
-        stroke="#d3d3d3"
-      />
-    ))}
-    {clusters.map((cluster, index) => (
-      <path
-        className="maze"
-        key={`${cluster[0]},${cluster[1]}-${cluster.length}`}
-        d={createPath(cluster)}
-        // stroke="lightblue"
-        // stroke={ dark_mode ? "url(#grad)" : "black" }
-        stroke="url(#grad)"
-        strokeWidth="2"
-        //fill={ dark_mode ? "#ffa" : "black" }
-        fill="black"
-        strokeLinecap="round"
-        strokeLinejoin="bevel"
-      />
-    ))}
-  </g>
   );
 }
 
+function BotSay({ position, say }: { position: Pos; say: string }) {
+  const self = useRef<SVGGElement>(null);
 
-function Maze({ game_uuid, shape, walls, food, bots, team_names, say, whowins, gameover, round, turn, animate }:
-  {
-    game_uuid: string,
-    shape: Pos,
-    walls: Pos[],
-    food: Pos[],
-    bots: [Pos, Pos, Pos, Pos],
-    team_names: [string, string],
-    say: [string, string, string, string],
-    whowins: number | null,
-    gameover: boolean,
-    round: number,
-    turn: number,
-    animate: boolean
-  }
-) {
+  return (
+    <motion.g
+      ref={self}
+      transform={`translate(${(position[0] + 0.5) * cellSize} ${(position[1] + 0.5) * cellSize}) scale(${cellSize / 16})`}
+      className="bot"
+      animate={{
+        x: (position[0] + 0.5) * cellSize,
+        y: (position[1] + 0.5) * cellSize,
+        scale: cellSize / 16,
+      }}
+      initial={false}
+      // initial={{
+      //   x: (position[0] + 0.5) * cellSize,
+      //   y: (position[1] + 0.5) * cellSize,
+      //   scale: cellSize / 16
+      // }}
+      transition={{ duration: 0.1 }}
+    >
+      <text y="-15" className="say-bg">
+        {say}
+      </text>
+      <text y="-15" className="say">
+        {say}
+      </text>
+    </motion.g>
+  );
+}
+
+function Walls({ shape, walls }: { shape: Pos; walls: Pos[] }) {
+  const clusters = useMemo(() => findClusters(shape, walls), [shape, walls]);
+  const [width, height] = shape;
+  const showWallCells = false;
+
+  return (
+    <>
+      <g className="maze-elems">
+        <line
+          x1={(width * cellSize) / 2}
+          y1={offset}
+          x2={(width * cellSize) / 2}
+          y2={height * cellSize - offset}
+          strokeWidth={cellSize / 6}
+          className="maze-border"
+        />
+
+        {showWallCells &&
+          walls.map(([x, y]) => (
+            <rect
+              key={`${x},${y}`}
+              x={x * cellSize}
+              y={y * cellSize}
+              width={cellSize}
+              height={cellSize}
+              className="wall-cell"
+            />
+          ))}
+
+        <g className="wall-main">
+          {clusters.map(cluster => (
+            <path
+              className="wall"
+              key={`${cluster[0]},${cluster[1]}-${cluster.length}`}
+              d={createPath(cluster)}
+            />
+          ))}
+        </g>
+        <g className="wall-overlay">
+          {clusters.map(cluster => (
+            <path
+              className="wall"
+              key={`${cluster[0]},${cluster[1]}-${cluster.length}`}
+              d={createPath(cluster)}
+            />
+          ))}
+        </g>
+      </g>
+    </>
+  );
+}
+
+function Maze({
+  game_uuid,
+  shape,
+  walls,
+  food,
+  bots,
+  team_names,
+  say,
+  whowins,
+  gameover,
+  round,
+  turn,
+  do_animate,
+}: {
+  game_uuid: string;
+  shape: Pos;
+  walls: Pos[];
+  food: Pos[];
+  bots: [Pos, Pos, Pos, Pos];
+  team_names: [string, string];
+  say: [string, string, string, string];
+  whowins: number | null;
+  gameover: boolean;
+  round: number;
+  turn: number;
+  do_animate: boolean;
+}) {
   const [width, height] = shape;
   const [a, x, b, y] = bots;
   const [sayA, sayX, sayB, sayY] = say;
 
-  const mazeBoxRef = useRef<HTMLDivElement>(null);
-  // used so that we can revert the animation
-  const [hasGameOverScreen, setHasGameOverScreen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const scope = useRef<Scope>(null);
+  const scope2 = useRef<Scope>(null);
+  const pathAnimationRef = useRef<Timeline>(null);
+
+  const svgId = useId(); // might not be needed thanks to css variables
 
   useEffect(() => {
-    if (game_uuid && animate) {
-      let pathAnimation = anime.timeline()
-        .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
-          strokeDashoffset: [anime.setDashoffset, 0],
-          easing: 'easeInCubic',
-          duration: 2000,
-          delay: function (el, i) { return i * 25 },
-          direction: 'alternate',
-          loop: false
+    if (!game_uuid || !do_animate) return;
+    if (pathAnimationRef.current) return;
+
+    scope.current = createScope({ root }).add(self => {
+      if (!root.current) return;
+
+      const tl = createTimeline({ autoplay: false });
+
+      const wallPathDrawable = svg.createDrawable('.maze-elems path.wall');
+
+      // console.log(wallPathDrawable[0].getTotalLength());
+      const wallSpeeds: number[] = [];
+      const wallDelays: number[] = [];
+
+      let delay = 0;
+
+      for (const wall of wallPathDrawable) {
+        const current = wall.getTotalLength();
+        wallSpeeds.push(current);
+        wallDelays.push(delay);
+        delay += current;
+      }
+
+      // function shuffle(array: any[]) {
+      //   for (let i = array.length - 1; i > 0; i--) {
+      //     let j = Math.floor(Math.random() * (i + 1));
+      //     [array[i], array[j]] = [array[j], array[i]];
+      //   }
+      // }
+
+      // shuffleExceptFirst(wallPathDrawable);
+
+      // maze building
+      tl.label('draw')
+        .set(root.current, {
+          // "--color-maze": "#fcdb04",
+          '--color-maze': '#000',
         })
-        .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
-          //fill: ['rgb(214, 219, 220)', "#faa"], // ffa
-          fillOpacity: [0, 0.7], // ffa
-          easing: 'linear',
-          duration: 2000
-        }, 2000)
-        .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
+        .set('.wall-main path.wall', {
+          stroke: `url(#smooth-grad-${svgId})`,
           strokeWidth: 0,
-          easing: 'linear',
-          duration: 2000
-        }, 4000)
-        .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.foodElems'),
-          opacity: [0, 1],
-          easing: 'linear',
-          duration: 2000,
-        }, 3000)
-        .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.botElems'),
-          opacity: [0, 1],
-          easing: 'linear',
-          duration: 2000,
-        }, 3500)
-        .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.middleLine'),
-          opacity: [0, 1],
-          easing: 'linear',
-          duration: 2000,
-        }, 3500);
+          // fill: 'black',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'bevel',
+        })
+        // .sync(
+        //   animate('.maze-elems path.wall', {
+        //     strokeWidth: 20,
+        //     ease: 'linear',
+        //     duration: 0,
+        //     // delay: function (el, i) { return ((i == 0) ? 0 : 2000) + i * 25 },
+        //   }))
+        .sync(
+          animate(wallPathDrawable, {
+            draw: '0 1',
+            ease: 'linear',
+            // duration: 2000,
+            // duration: function (el, i) { return wallSpeeds[i]; },
+            strokeWidth: [2, 2],
+            delay: function (el, i) {
+              return i * 25;
+            },
+            // delay: function (el, i) { return wallDelays[i]; },
+            // delay: function (el, i) { return ((i == 0) ? 0 : 2000) + i * 25 },
+            // delay: function (el, i) { return ((i == 0) ? 0 : Math.floor(Math.random() * 2500)) },
+            direction: 'alternate',
+            loop: false,
+          }),
+        )
+        .sync(
+          animate('.wall-main path.wall', {
+            fillOpacity: [0, 0.7], // ffa
+            ease: 'linear',
+            duration: 2000,
+          }),
+          2000,
+        )
+        .sync(
+          animate('.wall-main path.wall', {
+            strokeWidth: 0,
+            ease: 'linear',
+            duration: 2000,
+          }),
+          4000,
+        );
+
+      // reveal elements
+      tl.label('reveal')
+        .sync(
+          animate('.food-elems', {
+            opacity: [0, 1],
+            ease: 'linear',
+            duration: 2000,
+          }),
+          3000,
+        )
+        .sync(
+          animate('.bot-elems', {
+            opacity: [0, 1],
+            ease: 'linear',
+            duration: 2000,
+          }),
+          3500,
+        )
+        .sync(
+          animate('.maze-border', {
+            opacity: [0, 1],
+            ease: 'linear',
+            duration: 2000,
+          }),
+          3500,
+        );
+
+      pathAnimationRef.current = tl;
+      tl.play();
+    });
+
+    return () => {
+      pathAnimationRef.current?.pause();
+      pathAnimationRef.current = null;
+      scope.current?.revert();
     };
-
-    if (!animate) {
-      let pathAnimation = anime.timeline()
-      .add({
-        targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
-        //fill: ['rgb(214, 219, 220)', "#faa"], // ffa
-        fillOpacity: [0, 0.7], // ffa
-        easing: 'linear',
-        duration: 0
-      }, 0)
-      .add({
-        targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
-        strokeWidth: 0,
-        easing: 'linear',
-        duration: 0
-      }, 0)
-    }
-  }, [game_uuid, animate, mazeBoxRef]);
-
+  }, [game_uuid, do_animate]);
 
   useEffect(() => {
-    if (!gameover && hasGameOverScreen) {
-      let pathAnimation = anime.timeline()
-        .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
-          fill: ["#000"],
-          easing: 'linear',
-          duration: 200
-        });
+    scope2.current = createScope({ root });
+
+    return () => {
+      scope2.current?.revert(); // only on unmount
     };
-    if (gameover && whowins !== null) {
-      setHasGameOverScreen(true);
+  }, []);
 
-      let targetColor = {
-        0: "rgb(94, 158, 217)",
-        1: "rgb(235, 90, 90)",
-        2: "#ffa" // draw
-      }[whowins];
+  // game over screen
+  useEffect(() => {
+    if (!scope2.current) return;
 
-      let pathAnimation = anime.timeline()
-        .add({
-          targets: mazeBoxRef.current?.querySelectorAll('.maze path'),
-          fill: ["#000", targetColor],
-          easing: 'linear',
-          duration: 200
-        });
-    };
-  }, [gameover, whowins, mazeBoxRef, hasGameOverScreen]);
+    let targetColor = '#000';
 
+    // if (gameover) {
+    //   targetColor = {
+    //     0: ["#000", "var(--color-blue)"],
+    //     1: ["#000", "var(--color-red)"],
+    //     2: ["url(#smooth-grad)"]
+    //   }[whowins ?? -1] ?? ["#000"];
+    // }
+
+    // if (gameover) {
+    //   targetColor = {
+    //     0: "var(--color-blue)",
+    //     1: "var(--color-red)",
+    //     2: "#ffa" // draw
+    //   }[whowins ?? -1] ?? "#000";
+    // }
+
+    //color-mix(in srgb, var(--color-overlay) 70%, white 30%)
+
+    if (gameover) {
+      targetColor =
+        {
+          0: 'color-mix(in srgb, var(--color-blue) 70%, white 30%)',
+          1: 'color-mix(in srgb, var(--color-red) 70%, white 30%)',
+          2: `url(#smooth-grad-${svgId})`,
+        }[whowins ?? -1] ?? '#000';
+    }
+
+    console.log(targetColor);
+
+    scope2.current.add(() => {
+      if (!root.current) return;
+
+      // animate(root.current, {
+      //   "--color-overlay": targetColor,
+      //   ease: 'linear',
+      //   duration: 200,
+      // });
+
+      const tl = createTimeline({ autoplay: false });
+
+      if (gameover) {
+        tl.set(root.current, {
+          '--color-overlay': ['#000', targetColor],
+        })
+          .sync(
+            animate('.wall-overlay', {
+              opacity: 1,
+              ease: 'linear',
+              duration: 200,
+            }),
+            0,
+          )
+          .sync(
+            animate('.wall-main', {
+              opacity: 0,
+              ease: 'linear',
+              duration: 50,
+            }),
+            150,
+          );
+      } else {
+        tl.sync(
+          animate('.wall-main', {
+            opacity: 1,
+            ease: 'linear',
+            duration: 200,
+          }),
+        ).sync(
+          animate('.wall-overlay', {
+            opacity: 0,
+            ease: 'linear',
+            duration: 200,
+          }),
+        );
+      }
+
+      tl.play();
+    });
+  }, [gameover, whowins]);
 
   return (
-    <div ref={mazeBoxRef} className="mazebox object-fill">
+    <div ref={root} className="mazebox">
       <svg
         // width={width * cellSize}
         // height={height * cellSize}
         viewBox={`0 0 ${width * cellSize} ${height * cellSize}`}
         xmlns="http://www.w3.org/2000/svg"
-        style={{ overflow: "visible" }}
+        style={{ overflow: 'visible' }}
       >
         <style type="text/css">{`
-        line {
-            stroke: #000000;
-            stroke-linecap: round;
-            stroke-width: 3;
-        }
-        .blueFill {
-            fill: rgb(94, 158, 217);
-        }
-        .redFill {
-            fill: rgb(235, 90, 90);
-        }
-        .blueLine {
-            stroke: rgb(94, 158, 217);
-        }
-        .redLine {
-            stroke: rgb(235, 90, 90);
-        }
-        .sayBg {
-          stroke-width: 1.7px;
-          stroke: white;
-          font-size: 7px;
-          text-anchor: middle;
-          dominant-baseline: middle;
-          z-index: 90;
-        }
-        .say {
-          // stroke-width: 0.2px;
-          // stroke: white;
-          font-size: 7px;
-          text-anchor: middle;
-          dominant-baseline: middle;
-          z-index: 100;
-        }
-
-        .gameover {
-          fill: #FFC903;
-          stroke: #ED1B22;
-          stroke-width: 10px;
-          stroke-linejoin: round;
-          paint-order: stroke;
-        }
-    `}</style>
-
+          @scope {
+            .maze-border {
+              stroke: url(#grad-${svgId});
+              stroke-linecap: butt;
+            }
+            .wall-main path {
+              stroke-width: 0;
+              fill-opacity: 0.7;
+            }
+            .wall-main path.wall {
+              fill: var(--color-maze);
+              stroke-linecap: round;
+              stroke-linejoin: bevel;
+            }
+            .wall-overlay {
+              opacity: 0;
+            }
+            .wall-overlay path.wall {
+              fill: var(--color-overlay);
+              stroke-linecap: round;
+              stroke-linejoin: bevel;
+            }
+            .food-elems {
+              fill-opacity: 1;
+            }
+            .food {
+              stroke: #000000;
+              stroke-width: 0.3;
+            }
+            .wall-cell {
+              opacity: 2;
+              fill: lightblue;
+              stroke: #d3d3d3;
+            }
+            .fill-blue {
+              fill: var(--color-blue);
+            }
+            .fill-red {
+              fill: var(--color-red);
+            }
+            .say-bg {
+              stroke-width: 1.7px;
+              stroke: white;
+              font-size: 7px;
+              text-anchor: middle;
+              dominant-baseline: middle;
+              z-index: 90;
+            }
+            .say {
+              font-size: 7px;
+              text-anchor: middle;
+              dominant-baseline: middle;
+              z-index: 100;
+            }
+            .gameover-overlay {
+              fill: #FFC903;
+              letter-spacing: 0px;
+              stroke: #ED1B22;
+              stroke-width: ${((height * cellSize) / 8 / 8) * 1.2}px;
+              stroke-linejoin: round;
+              paint-order: stroke;
+            }
+          }
+        `}</style>
 
         <defs>
-          <linearGradient id="grad" gradientUnits="userSpaceOnUse">
-            <stop stopColor="blue" offset="0" />
-            <stop stopColor="blue" offset="50%" />
-            <stop stopColor="red" offset="50%" />
-            <stop stopColor="red" offset="100%" />
+          <linearGradient id={`grad-${svgId}`} gradientUnits="userSpaceOnUse">
+            <stop stopColor="var(--color-blue)" offset="0" />
+            <stop stopColor="var(--color-blue)" offset="50%" />
+            <stop stopColor="var(--color-red)" offset="50%" />
+            <stop stopColor="var(--color-red)" offset="100%" />
+          </linearGradient>
+          <linearGradient id={`smooth-grad-${svgId}`} gradientUnits="userSpaceOnUse">
+            <stop stopColor="color-mix(in srgb, var(--color-blue) 70%, white 30%)" offset="0" />
+            <stop stopColor="color-mix(in srgb, var(--color-red) 70%, white 30%)" offset="100%" />
           </linearGradient>
         </defs>
 
-        <Walls shape={shape} walls={walls}></Walls>
-        <g className="foodElems">
-          <AnimatePresence>
-            {food.map(([x, y], index) => (
-              <Food key={`${x},${y}`} position={[x, y]} color={x < width / 2 ? "blue" : "red"}></Food>
-            ))}
-          </AnimatePresence>
+        <g>
+          <Walls shape={shape} walls={walls}></Walls>
+          <g className="food-elems">
+            <AnimatePresence>
+              {food.map(([x, y]) => (
+                <Food
+                  key={`${x},${y}`}
+                  position={[x, y]}
+                  side={x < width / 2 ? 'blue' : 'red'}
+                ></Food>
+              ))}
+            </AnimatePresence>
+          </g>
+
+          <g className="bot-elems">
+            {
+              // sorting bots to ensure the lastest bot is on top
+
+              [
+                [turn, <Bot position={a} key="botA" side="blue" width={width}></Bot>],
+                [(turn + 3) % 4, <Bot position={x} key="botX" side="red" width={width}></Bot>],
+                [(turn + 2) % 4, <Bot position={b} key="botB" side="blue" width={width}></Bot>],
+                [(turn + 1) % 4, <Bot position={y} key="botY" side="red" width={width}></Bot>],
+              ]
+                .toSorted()
+                .toReversed()
+                .map(([_t, val]) => val)
+            }
+            {
+              // text after bots so that bots do not cover text
+              [
+                [turn, <BotSay position={a} key="say-botA" say={sayA} />],
+                [(turn + 3) % 4, <BotSay position={x} key="say-botX" say={sayX} />],
+                [(turn + 2) % 4, <BotSay position={b} key="say-botB" say={sayB} />],
+                [(turn + 1) % 4, <BotSay position={y} key="say-botY" say={sayY} />],
+              ]
+                .toSorted()
+                .toReversed()
+                .map(([_t, val]) => val)
+            }
+          </g>
+
+          {gameover ? (
+            <>
+              <text
+                fontSize={((height * cellSize) / 8) * 1.1}
+                className="gameover-overlay"
+                y="40%"
+                transform={`translate(${(width * cellSize) / 2})`}
+                dominantBaseline="middle"
+                textAnchor="middle"
+              >
+                <tspan x="0" textAnchor="middle">
+                  GAME OVER
+                </tspan>
+                <tspan x="0" textAnchor="middle" dy={((height * cellSize) / 8) * 1.5}>
+                  {whowins == null || whowins == 2 ? 'DRAW' : `${team_names[whowins]} wins!`}
+                </tspan>
+              </text>
+            </>
+          ) : null}
         </g>
-
-        <g className="botElems">
-          <Bot position={a} key="botA" color="blue" say={sayA} width={width} fadeIn={animate} turnsAgo={turn}></Bot>
-          <Bot position={x} key="botX" color="red" say={sayX} width={width} fadeIn={animate} turnsAgo={(turn + 3) % 4}></Bot>
-          <Bot position={b} key="botB" color="blue" say={sayB} width={width} fadeIn={animate} turnsAgo={(turn + 2) % 4}></Bot>
-          <Bot position={y} key="botY" color="red" say={sayY} width={width} fadeIn={animate} turnsAgo={(turn + 1) % 4}></Bot>
-        </g>
-
-        {
-          gameover ? (<>
-          <text fontSize="60" className="gameover"
-            x="50%" y="25%"
-            dominantBaseline="middle"
-            textAnchor="middle"
-          >
-            GAME OVER
-          </text>
-          <text fontSize="60" className="gameover"
-            x="50%" y="75%"
-            dominantBaseline="middle"
-            textAnchor="middle"
-          >
-            { whowins == null || whowins == 2 ? "DRAW" : `${team_names[whowins]} wins!` }
-          </text>
-          </>) : null
-        }
-
       </svg>
     </div>
   );
-};
+}
 export default Maze;
-

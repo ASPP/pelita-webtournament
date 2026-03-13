@@ -1,8 +1,19 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
+/* eslint-disable-next-line css/no-invalid-at-rules */
+@theme {
+  --color-red: rgb(235, 90, 90);
+  --color-blue: rgb(94, 158, 217);
+}
+
+/* eslint-disable-next-line css/no-invalid-at-rules */
+@theme inline {
+  --font-serif: var(--font-abril-fatface);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-cascadia-code);
+}
+
+:root, :host {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 255, 255, 255;
   --background-end-rgb: 255, 255, 255;
@@ -24,7 +35,7 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
-  background: white;
+  background: black;
 }
 
 .crt {
@@ -37,21 +48,40 @@ body {
   /* text-align: center; */
   text-shadow: 0 0 10px #00ff00;
 
+  backdrop-filter: blur(5px);
   filter: blur(.8px);
   border-radius: 20px;
 }
 
+.video-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.video-overlay video {
+  width: 90vw;
+  height: 90vh;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
 .red-bot {
-  color: rgb(235, 90, 90);
+  /* color: rgb(235, 90, 90); */
+  color: var(--color-red);
 }
 
 .blue-bot {
-  color: rgb(94, 158, 217);
+  /* color: rgb(94, 158, 217); */
+  color: var(--color-blue);
 }
 
 @media screen{
   .crt {
     animation: scanlines infinite 55s linear ;
+    /* transform: translate3d(0, 0, 0); */
   }
 }
 @keyframes scanlines {
@@ -67,4 +97,27 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/*
+.dev-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: red;
+  z-index: 99999;
+  pointer-events: none;
+} */
+
+.dev-indicator {
+  height: 4px;
+  background: repeating-linear-gradient(
+    45deg,
+    red,
+    red 10px,
+    darkred 10px,
+    darkred 20px
+  );
 }

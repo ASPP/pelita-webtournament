@@ -1,43 +1,51 @@
-import React, { ReactNode, useEffect, useRef, useState } from "react";
+import { animate, createScope, Scope } from 'animejs';
+import { useEffect, useRef, useState } from "react";
 
-import anime from "animejs/lib/anime.es.js";
 import styles from "./typewritertext.module.css";
 
 
 function Cursor() {
-  const self = useRef<HTMLDivElement>(null);
+  const root = useRef<HTMLElement>(null);
+  const scope = useRef<Scope>(null);
 
   useEffect(() => {
-    const blink = anime({
-      targets: self.current,
-      loop: true,
-      duration: 750,
-      opacity: [{ value: [1, 1] }, { value: [0, 0] }],
+    scope.current = createScope({ root }).add( self => {
+      const blink = animate('.cursor', {
+        loop: true,
+        duration: 750,
+        opacity: [{ to: [1, 1] }, { to: [0, 0] }],
+      });
     });
+
+    return () => { scope.current?.revert(); }
   }, []);
 
-  return (<span ref={self} className={`cursor ${styles.cursor}`}>█</span>)
+  return (<span ref={root}><span className={`cursor ${styles.cursor}`}>█</span></span>)
 }
 
 function FadingLetter({ char }: { char: string }) {
-  const letter = useRef(null);
+  const root = useRef<HTMLElement>(null);
+  const scope = useRef<Scope>(null);
 
   useEffect(() => {
-    anime({
-      targets: letter.current,
-      loop: false,
-      //opacity: [{ value: [1, 1] }, { value: [0, 0] }],
-      color: ['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#eeeeee'],
-      duration: 100,
+    scope.current = createScope({ root }).add( self => {
+      animate('.letter', {
+        loop: false,
+        // opacity: [{ to: [1, 1] }, { to: [0, 0] }],
+        color: ['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#eeeeee'],
+        duration: 100,
+        ease: 'outBounce'
+      });
     });
+    return () => { scope.current?.revert(); }
   }, []);
 
-  return (<span ref={letter} className={`letter ${styles.letter}`}>
+  return (<span ref={root}><span className={`letter ${styles.letter}`}>
     {char == " " ? "\u00A0" : char}
-  </span>);
+  </span></span>);
 }
 
-function TypewriterLine( { text, cursor, lineFinished }: { text: string, cursor: boolean, lineFinished: () => any }) {
+function TypewriterLine( { text, cursor }: { text: string, cursor: boolean }) {
   const TYPE_AFTER_MS = 1_000;
   const JUMP_AFTER_MS = 80;
 
@@ -56,7 +64,6 @@ function TypewriterLine( { text, cursor, lineFinished }: { text: string, cursor:
         }</p>
     </>
   );
-  const text_animation_ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -74,14 +81,14 @@ function TypewriterLine( { text, cursor, lineFinished }: { text: string, cursor:
     }, JUMP_AFTER_MS);
 
     //Clearing the interval
-    return () => clearInterval(interval);
+    return () => { clearInterval(interval); };
   }, [index, text.length]);
 
   if (current === "")
     return (<div><br/></div>);
 
   return (
-    <div ref={text_animation_ref} className={styles.text_animation}>
+    <div className={styles.text_animation}>
       {lineHtml}
     </div>
   );
@@ -90,7 +97,7 @@ function TypewriterLine( { text, cursor, lineFinished }: { text: string, cursor:
 function TypewriterText({ text, lines }: { text: string[], lines: number }) {
   // IMPORTANT: This code chokes on an empty string. Logic needs to be refactored
   const len = text.length;
-  return text.map((v, idx) => <TypewriterLine key={idx} text={v} cursor={idx + 1 === len} lineFinished={() => {}}></TypewriterLine>).slice(-lines);
+  return text.map((v, idx) => <TypewriterLine key={idx} text={v} cursor={idx + 1 === len}></TypewriterLine>).slice(-lines);
 /*
   const TYPE_AFTER_MS = 1_000;
   const JUMP_AFTER_MS = 80;

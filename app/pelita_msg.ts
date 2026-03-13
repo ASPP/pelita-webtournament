@@ -1,23 +1,24 @@
-import type { Tuple4 } from "./typeutils";
+import type { Tuple4 } from './typeutils';
 
 export type Pos = [number, number];
+export type Side = 'blue' | 'red';
 
 export type RootMsg =
   | {
-      __action__: "observe";
+      __action__: 'observe';
       __data__: ObserveGameState;
     }
   | {
-      __action__: "SPEAK";
+      __action__: 'SPEAK';
       __data__: string;
     }
   | {
-      __action__: "CLEAR";
+      __action__: 'CLEAR';
       __data__: null;
     }
   | {
-      __action__: "INIT";
-      __data__: null;
+      __action__: 'INIT';
+      __data__: TournamentMetadata;
     };
 
 export interface ObserveGameState {
@@ -29,8 +30,9 @@ export interface ObserveGameState {
   turn: number;
   round: number;
   gameover: boolean;
-  whowins?: any;
+  whowins?: number;
   bots: Tuple4<Pos>;
+  team_specs?: [string, string];
   score: [number, number];
   fatal_errors: any[][];
   errors: null[];
@@ -42,7 +44,7 @@ export interface ObserveGameState {
   shadow_distance: number;
   layout_name: string;
   team_names: [string, string];
-  team_infos: null[];
+  team_infos?: [string, string];
   team_time: [number, number];
   deaths: Tuple4<number>;
   kills: Tuple4<number>;
@@ -78,6 +80,8 @@ export interface GameState {
   food: [number, number][];
   bots: Tuple4<[number, number]>;
   team_names: [string, string];
+  team_specs: [string, string];
+  team_infos: [string, string];
   game_stats: GameStats;
   whowins: number;
   gameover: boolean;
@@ -87,10 +91,32 @@ export interface GameState {
   turn: number;
 }
 
+export interface TournamentMetadata {
+  teams: [string: TeamMetadata];
+  location: string;
+  date: string;
+  rounds: number;
+  // size: [number, number];
+  greeting: string;
+  farewell: string;
+  host: string;
+  seed: string;
+  bonusmatch: boolean;
+}
+
+export interface TeamMetadata {
+  spec: string;
+  name: string;
+  members: [string];
+  color: string;
+}
+
 export function conv_game_state(gs: ObserveGameState): GameState {
   // const bot_directions = gs.bots.map((pos, idx) => {
   //
   // });
+
+  // TODO: Should the food be sorted?
 
   return {
     game_uuid: gs.game_uuid,
@@ -99,11 +125,13 @@ export function conv_game_state(gs: ObserveGameState): GameState {
     food: gs.food,
     bots: gs.bots,
     // "bot_directions": bot_directions,
+    team_specs: gs.team_specs ?? ['', ''],
     say: gs.say,
     turn: gs.turn,
     round: gs.round,
     max_rounds: gs.max_rounds,
     team_names: gs.team_names,
+    team_infos: gs.team_infos ?? ['', ''],
     game_stats: {
       score: gs.score,
       num_errors: gs.num_errors,
@@ -111,7 +139,7 @@ export function conv_game_state(gs: ObserveGameState): GameState {
       deaths: gs.deaths,
       team_time: gs.team_time,
     },
-    whowins: gs.whowins,
+    whowins: gs.whowins ?? -1,
     gameover: gs.gameover,
   };
 }
