@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Cascadia_Code, Abril_Fatface } from 'next/font/google';
 
 import './globals.css';
+import { DebugMessagesProvider } from './debugmessages';
 
 function DevIndicator() {
   if (process.env.NODE_ENV === 'production') return null;
@@ -42,7 +43,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${cascadiaCode.variable} ${abrilFatface.variable}`}>
         <DevIndicator />
-        {children}
+        <DebugMessagesProvider>
+          {children}
+        </DebugMessagesProvider>
       </body>
     </html>
   );

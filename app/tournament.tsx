@@ -6,8 +6,10 @@ import React, { Reducer, useCallback, useEffect, useReducer } from 'react';
 import DemoGame from './demo/page';
 import Pelita from './pelita';
 import { GameState, TournamentMetadata } from './pelita_msg';
+import SingleGame from './single-game';
 import TypewriterText from './typewritertext';
 import ZMQReceiver from './zmqreceiver';
+import DebugFooter from './debugfooter';
 
 type PelitaState =
   | 'initial'
@@ -15,6 +17,7 @@ type PelitaState =
   | 'intro'
   | 'match'
   | 'faulted'
+  | 'single-game'
   | 'demo-columns'
   | 'demo-game';
 type PelitaEvent =
@@ -23,6 +26,7 @@ type PelitaEvent =
   | 'game-playing'
   | 'clear-page'
   | 'fail'
+  | 'do-single-game'
   | 'do-demo'
   | 'do-demo-columns'
   | 'do-demo-game';
@@ -36,6 +40,8 @@ const reducer: Reducer<PelitaState, PelitaEvent> = (state, event) => {
       if (event === 'start-movie') return 'movie';
       if (event === 'do-demo-columns') return 'demo-columns';
       if (event === 'do-demo-game') return 'demo-game';
+      if (event === 'start-intro') return 'intro';
+      if (event === 'do-single-game') return 'single-game';
       break;
     case 'movie':
       if (event === 'start-intro') return 'intro';
@@ -148,19 +154,6 @@ function PelitaTournament() {
     setTypewriterText([]);
   }, []);
 
-  const handleClick = () => {
-    switch (state) {
-      case 'initial':
-        dispatch('start-movie');
-        break;
-      case 'movie':
-        dispatch('start-intro');
-        break;
-      default:
-        break;
-    }
-  };
-
   const doDemoColumns = () => {
     dispatch('do-demo-columns');
   };
@@ -186,23 +179,28 @@ function PelitaTournament() {
 
   return (
     <>
-      <main className={`min-h-screen flex-col items-center justify-between px-24 py-12 ${crt}`}>
+      <main className={`min-h-screen flex-col items-center justify-between px-24 py-12 ${crt} crt-blurry-area`}>
         <div className="z-10 w-full max-w-screen items-center justify-between font-mono text-sm">
           {state == 'initial' && (
             <>
               <div>
-                <button onClick={handleClick}>Start Pelita Tournament</button>{' '}
-                <button onClick={handleClick}>(quick)</button>
+                <button onClick={() => { dispatch('start-movie'); }}>Start Pelita Tournament</button>{' '}
+                <button onClick={() => { dispatch('start-intro'); }}>(quick)</button>
               </div>
               <div>
                 <button onClick={doDemoColumns}>Demo Columns</button>{' '}
                 <button onClick={doDemoGame}>Demo Maze</button>
+              </div>
+              <div>
+                <button onClick={() => { dispatch('do-single-game'); }}>Single game</button>
               </div>
             </>
           )}
           {state === 'intro' && showIntro()}
           {state === 'demo-columns' && demoColumns()}
           {state === 'demo-game' && <DemoGame clearPage={clearPage} />}
+
+          {state === 'single-game' && <SingleGame />}
 
           {state == 'match' && (
             <div>
@@ -222,7 +220,7 @@ function PelitaTournament() {
           )}
 
           <ZMQReceiver
-            url="ws://localhost:5556"
+            path="/pelita-webtournament/api/stream"
             sendGameState={updateGameState}
             sendMessage={updateMessage}
             sendClearPage={clearPage}
@@ -231,9 +229,11 @@ function PelitaTournament() {
         </div>
       </main>
 
+      <DebugFooter />
+
       {state == 'movie' && (
         <aside className="video-overlay">
-          <video autoPlay controls onEnded={handleClick}>
+          <video autoPlay controls onEnded={() => { dispatch('start-intro'); }}>
             <source src={'Pelita Supercut ASPP.mp4'} type="video/mp4" />
           </video>
         </aside>

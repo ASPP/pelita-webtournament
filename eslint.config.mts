@@ -2,6 +2,7 @@ import css from '@eslint/css';
 import js from '@eslint/js';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import prettier from 'eslint-config-prettier';
+import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths';
 import perfectionist from 'eslint-plugin-perfectionist';
 import react from 'eslint-plugin-react';
 import { globalIgnores } from 'eslint/config';
@@ -11,12 +12,7 @@ import tseslint from 'typescript-eslint';
 
 export default defineConfig([
   ...nextVitals,
-  globalIgnores([
-    '.next/**',
-    'out/**',
-    'build/**',
-    'next-env.d.ts',
-  ]),
+  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts']),
   {
     files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     plugins: { js, react },
@@ -62,6 +58,16 @@ export default defineConfig([
     files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     ...react.configs.flat['jsx-runtime'],
     languageOptions: { globals: globals.browser },
+  },
+  {
+    plugins: {
+      'no-relative-import-paths': noRelativeImportPaths,
+    },
+    rules: {
+      'no-relative-import-paths/no-relative-import-paths': ['warn',
+        { "allowSameFolder": true, "prefix": "@" }
+      ],
+    },
   },
   {
     settings: {

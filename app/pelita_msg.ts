@@ -1,4 +1,4 @@
-import type { Tuple4 } from './typeutils';
+import type { Tuple4 } from '@/lib/typeutils';
 
 export type Pos = [number, number];
 export type Side = 'blue' | 'red';
