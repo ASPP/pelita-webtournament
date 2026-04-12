@@ -19,6 +19,7 @@
 # misc
 .DS_Store
 *.pem
+.tmp-next-build
 
 # debug
 npm-debug.log*
