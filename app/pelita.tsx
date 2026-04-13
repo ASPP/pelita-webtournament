@@ -21,6 +21,7 @@ export default function Pelita({
   do_animate?: boolean;
 }) {
   let [colorBlue, colorRed] = colors;
+  let [colorBlueBg, colorRedBg] = ['#ffffff', '#ffffff'];
   const [team1, team2] = gameState.team_names;
   const [team_info1, team_info2] = gameState.team_infos;
   const [group1, group2] = gameState.team_specs;
@@ -71,6 +72,25 @@ export default function Pelita({
     colorRed = colorNameToCode(colorRed);
   }
 
+  function hexColBrightness(hexCol: string) {
+    // TODO: The code only works with hex codes currently
+    if (! (hexCol.substring(0, 1) === '#')) return 127;
+
+    const r = parseInt(hexCol.substring(1, 3), 16);
+    const g = parseInt(hexCol.substring(3, 5), 16);
+    const b = parseInt(hexCol.substring(5, 7), 16);
+    const hsp = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b))
+    return hsp;
+  }
+
+  if (hexColBrightness(colorBlue) > 220) {
+    colorBlueBg = '#000000';
+  }
+
+  if (hexColBrightness(colorRed) > 220) {
+    colorRedBg = '#000000';
+  }
+
   return (
     <div
       ref={root}
@@ -79,16 +99,18 @@ export default function Pelita({
         {
           '--color-blue': colorBlue,
           '--color-red': colorRed,
+          '--color-blue-bg': colorBlueBg,
+          '--color-red-bg': colorRedBg,
         } as React.CSSProperties
       }
     >
       <h2 className="flex flex-row text-xl p-2 team-names">
         <span className="basis-1/2 text-right w-64 blue-bot">
-          <small>{team_info1}</small> <b>{team1}</b> {gameState.game_stats.score[0]}
+          <span className='p-1 blue-bot-bg'><small>{team_info1}</small> <b>{team1}</b> {gameState.game_stats.score[0]}</span>
         </span>
         <span className="basis-1 px-2">:</span>
         <span className="basis-1/2 text-left w-64 red-bot">
-          {gameState.game_stats.score[1]} <b>{team2}</b> <small>{team_info2}</small>
+          <span className='p-1 red-bot-bg'>{gameState.game_stats.score[1]} <b>{team2}</b> <small>{team_info2}</small></span>
         </span>
       </h2>
       <div className="flex flex-row text-xs team-stats">

@@ -4,6 +4,8 @@
 @theme {
   --color-red: rgb(235, 90, 90);
   --color-blue: rgb(94, 158, 217);
+  --color-red-bg: unset; /* rgb(255, 255, 255); */
+  --color-blue-bg: unset; /* rgb(255, 255, 255); */
 }
 
 /* eslint-disable-next-line css/no-invalid-at-rules */
@@ -79,6 +81,14 @@ body {
 .blue-bot {
   /* color: rgb(94, 158, 217); */
   color: var(--color-blue);
+}
+
+.red-bot-bg {
+  background-color: var(--color-red-bg);
+}
+
+.blue-bot-bg {
+  background-color: var(--color-blue-bg);
 }
 
 @media screen{
