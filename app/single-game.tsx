@@ -70,7 +70,6 @@ function SingleGame() {
       )}
 
       <ZMQReceiver
-        path="/pelita-webtournament/api/stream"
         sendGameState={updateGameState}
       ></ZMQReceiver>
 

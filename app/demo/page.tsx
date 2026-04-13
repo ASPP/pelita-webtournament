@@ -148,7 +148,6 @@ function DemoGame({
 
       {liveDataMode && (
         <ZMQReceiver
-          path="/pelita-webtournament/api/stream"
           sendGameState={updateGameState}
         ></ZMQReceiver>
       )}

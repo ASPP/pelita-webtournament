@@ -220,7 +220,6 @@ function PelitaTournament() {
           )}
 
           <ZMQReceiver
-            path="/pelita-webtournament/api/stream"
             sendGameState={updateGameState}
             sendMessage={updateMessage}
             sendClearPage={clearPage}

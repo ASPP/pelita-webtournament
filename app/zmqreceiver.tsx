@@ -21,12 +21,14 @@ export default function ZMQReceiver({
   sendClearPage,
   setTournamentMetadata,
 }: {
-  path: string;
+  path?: string;
   sendGameState: (gs: GameState) => void;
   sendMessage?: (msg: string) => void;
   sendClearPage?: () => void;
   setTournamentMetadata?: (tournamentMetadata: TournamentMetadata) => void;
 }) {
+  path ??= "/api/stream";
+
   const [isConnected, setIsConnected] = useState(false);
 
   const { addDebugMessage } = useDebugMessages();
