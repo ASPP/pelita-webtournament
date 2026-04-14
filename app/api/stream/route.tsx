@@ -1,36 +1,18 @@
+import { createSSEHandler } from 'use-next-sse';
 
-import type { NextRequest } from 'next/server'
-
+import { RootMsg } from '@/app/pelita_types';
 import { eventBus } from '@/lib/event-bus';
 
+export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
-  const { signal } = req;
-
-  const stream = new ReadableStream({
-    start(controller) {
-      const unsubscribe = eventBus.subscribe(msg => {
-        if (signal.aborted) return;
-
-        try {
-          controller.enqueue(`data: ${msg}\n\n`);
-        } catch {
-          unsubscribe();
-        }
-      });
-
-      signal.addEventListener('abort', () => {
-        unsubscribe();
-      });
-    },
+export const GET = createSSEHandler((send, close) => {
+  const unsubscribe = eventBus.subscribe(msg => {
+    // console.log(msg);
+    send(JSON.parse(msg) as RootMsg);
+    // close();
   });
 
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Content-Encoding': 'none',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    },
-  });
-}
+  return () => {
+    unsubscribe();
+  };
+});

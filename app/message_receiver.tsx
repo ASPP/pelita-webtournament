@@ -1,20 +1,34 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSSE } from 'use-next-sse';
 
-import type { RootMsg, GameState, TournamentMetadata } from './pelita_msg';
+import type { RootMsg, GameState, TournamentMetadata } from './pelita_types';
 
 import { useDebugMessages } from './debugmessages';
-import { conv_game_state } from './pelita_msg';
+import { convertGameState } from './pelita_types';
 
-function replaceAnsi(s: string) {
+
+export function replaceAnsi(s: string) {
   return s.replaceAll(
     /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
     '',
   );
 }
 
-export default function ZMQReceiver({
+export function useMessageReceiver(path?: string): RootMsg | undefined {
+  path ??= "/api/stream";
+
+  const { data, error } = useSSE<RootMsg>({
+    url: path
+  });
+
+  if (!data) return;
+  return data;
+};
+
+
+export function ZMQReceiver({
   path,
   sendGameState,
   sendMessage,
@@ -38,10 +52,11 @@ export default function ZMQReceiver({
 
     es.onopen = _event => {
       setIsConnected(true);
-      // console.log(event);
+      // console.log(_event);
     };
 
     es.onerror = err => {
+      // TODO: Show error in UI
       console.log(err);
     };
 
@@ -70,7 +85,7 @@ export default function ZMQReceiver({
       } else if (parsed.__action__ === 'CLEAR') {
         sendClearPage?.();
       } else if (parsed.__action__ === 'observe') {
-        const conv = conv_game_state(parsed.__data__);
+        const conv = convertGameState(parsed.__data__);
         sendGameState(conv);
       } else if (parsed.__action__ === 'INIT') {
         const metadata = parsed.__data__;

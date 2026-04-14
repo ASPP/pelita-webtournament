@@ -111,20 +111,13 @@ export interface TeamMetadata {
   color: string;
 }
 
-export function conv_game_state(gs: ObserveGameState): GameState {
-  // const bot_directions = gs.bots.map((pos, idx) => {
-  //
-  // });
-
-  // TODO: Should the food be sorted?
-
+export function convertGameState(gs: ObserveGameState): GameState {
   return {
     game_uuid: gs.game_uuid,
     shape: gs.shape,
     walls: gs.walls,
     food: gs.food,
     bots: gs.bots,
-    // "bot_directions": bot_directions,
     team_specs: gs.team_specs ?? ['', ''],
     say: gs.say,
     turn: gs.turn,

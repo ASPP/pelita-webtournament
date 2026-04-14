@@ -2,7 +2,7 @@
 
 "use client"
 
-import { ObserveGameStateL } from "@/app/pelita_msg";
+import { ObserveGameStateL } from "@/app/pelita_types";
 import PelitaReplay, { ColorMap } from "@/app/pelita_replay";
 
 import match01 from "./round1-match01-20250927-194437.json";

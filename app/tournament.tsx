@@ -3,13 +3,14 @@
 import { createTimeline } from 'animejs';
 import React, { Reducer, useCallback, useEffect, useReducer } from 'react';
 
+import DebugFooter from './debugfooter';
 import DemoGame from './demo/page';
-import Pelita from './pelita';
-import { GameState, TournamentMetadata } from './pelita_msg';
+import { useMessageReceiver,  replaceAnsi } from './message_receiver';
+import PelitaMatch from './pelita_match';
+import { convertGameState, GameState, TournamentMetadata } from './pelita_types';
 import SingleGame from './single-game';
 import TypewriterText from './typewritertext';
-import ZMQReceiver from './zmqreceiver';
-import DebugFooter from './debugfooter';
+
 
 type PelitaState =
   | 'initial'
@@ -109,10 +110,9 @@ function PelitaTournament() {
         if (team.color) color2 = team.color;
       }
     }
-  }
 
-  // console.log("Metadata");
-  console.log(tournamentMetadata);
+    console.log(tournamentMetadata);
+  }
 
   const colors: [string, string] = [color1, color2];
 
@@ -149,10 +149,34 @@ function PelitaTournament() {
     setTypewriterText(oldText => [...oldText, ...split_str]);
   }, []);
 
-  const clearPage = useCallback(() => {
+  const doClearPage = useCallback(() => {
     dispatch('clear-page');
     setTypewriterText([]);
   }, []);
+
+  const data = useMessageReceiver();
+
+  useEffect(() => {
+    if (!data) return;
+
+    if (!(data.__action__ === 'INIT'))
+      console.log(data.__action__);
+
+    if (data.__action__ === 'SPEAK') {
+      // Replacing all ANSI code here
+      updateMessage(replaceAnsi(data.__data__));
+    } else if (data.__action__ === 'CLEAR') {
+      doClearPage();
+    } else if (data.__action__ === 'observe') {
+      const conv = convertGameState(data.__data__);
+      updateGameState(conv);
+    } else if (data.__action__ === 'INIT') {
+      const metadata = data.__data__;
+      console.log('Setting metadata', metadata);
+      setTournamentMetadata(metadata);
+      doClearPage();
+    }
+  }, [data]);
 
   const doDemoColumns = () => {
     dispatch('do-demo-columns');
@@ -198,7 +222,7 @@ function PelitaTournament() {
           )}
           {state === 'intro' && showIntro()}
           {state === 'demo-columns' && demoColumns()}
-          {state === 'demo-game' && <DemoGame clearPage={clearPage} />}
+          {state === 'demo-game' && <DemoGame clearPage={doClearPage} />}
 
           {state === 'single-game' && <SingleGame />}
 
@@ -209,22 +233,15 @@ function PelitaTournament() {
               </h1>
 
               {gameState && tournamentMetadata && (
-                <Pelita
+                <PelitaMatch
                   gameState={gameState}
                   colors={colors}
                   footer={`ᗧ Pelita Tournament, ${tournamentMetadata.location} ${tournamentMetadata.date}`}
                   do_animate={true}
-                ></Pelita>
+                ></PelitaMatch>
               )}
             </div>
           )}
-
-          <ZMQReceiver
-            sendGameState={updateGameState}
-            sendMessage={updateMessage}
-            sendClearPage={clearPage}
-            setTournamentMetadata={setTournamentMetadata}
-          ></ZMQReceiver>
         </div>
       </main>
 

@@ -4,9 +4,10 @@ import Compact from '@uiw/react-color-compact';
 import { createTimeline } from 'animejs';
 import { useCallback, useEffect, useState } from 'react';
 
-import Pelita from '@/app/pelita';
-import { GameState } from '@/app/pelita_msg';
-import ZMQReceiver from '@/app/zmqreceiver';
+import { useMessageReceiver } from '@/app/message_receiver';
+import PelitaMatch from '@/app/pelita_match';
+import { convertGameState, GameState } from '@/app/pelita_types';
+
 
 function SingleGame() {
   const [animationState, setAnimationState] = useState(true);
@@ -37,8 +38,6 @@ function SingleGame() {
   const colors: [string, string] = [color1, color2];
 
   const updateGameState = useCallback((gameState: GameState) => {
-    console.log(gameState);
-
     setGameState(oldState => {
       if (!oldState) return gameState;
       if (oldState.game_uuid === gameState.game_uuid) {
@@ -54,6 +53,17 @@ function SingleGame() {
     });
   }, []);
 
+  const data = useMessageReceiver()
+  // console.log(data);
+
+  useEffect(() => {
+    if (data?.__action__ === 'observe') {
+    const conv = convertGameState(data.__data__);
+    updateGameState(conv);
+    }
+  }, [data, updateGameState]);
+
+
   return (
     <div>
       {/* <h1 className="fixed top-0 left-0 z-20 w-full px-24 py-4 text-xl">
@@ -61,17 +71,17 @@ function SingleGame() {
     </h1> */}
 
       {gameState && (
-        <Pelita
+        <PelitaMatch
           gameState={gameState}
           colors={colors}
           footer={`ᗧ Pelita Tournament, location date`}
           do_animate={animationState}
-        ></Pelita>
+        ></PelitaMatch>
       )}
-
+{/*
       <ZMQReceiver
         sendGameState={updateGameState}
-      ></ZMQReceiver>
+      ></ZMQReceiver> */}
 
       <div>
         <button

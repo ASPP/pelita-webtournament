@@ -5,11 +5,11 @@ import { colorNameToCode } from 'color-name-to-code';
 import { useEffect, useRef } from 'react';
 
 import Maze from './maze';
-import { GameState } from './pelita_msg';
+import { GameState } from './pelita_types';
 
 const defaultColors: [string, string] = ['rgb(94, 158, 217)', 'rgb(235, 90, 90)'];
 
-export default function Pelita({
+export default function PelitaMatch({
   gameState,
   colors = defaultColors,
   footer,
@@ -21,7 +21,7 @@ export default function Pelita({
   do_animate?: boolean;
 }) {
   let [colorBlue, colorRed] = colors;
-  let [colorBlueBg, colorRedBg] = ['#ffffff', '#ffffff'];
+  let [colorBlueBg, colorRedBg] = ['unset', 'unset'];
   const [team1, team2] = gameState.team_names;
   const [team_info1, team_info2] = gameState.team_infos;
   const [group1, group2] = gameState.team_specs;
@@ -74,20 +74,25 @@ export default function Pelita({
 
   function hexColBrightness(hexCol: string) {
     // TODO: The code only works with hex codes currently
-    if (! (hexCol.substring(0, 1) === '#')) return 127;
+    if (!hexCol.startsWith('#')) return 127;
+    if (hexCol.length === 4) {
+      hexCol = '#' + hexCol[1] + hexCol[1] + hexCol[2] + hexCol[2] + hexCol[3] + hexCol[3];
+    }
+    if (hexCol.length !== 7) return 127;
 
     const r = parseInt(hexCol.substring(1, 3), 16);
     const g = parseInt(hexCol.substring(3, 5), 16);
     const b = parseInt(hexCol.substring(5, 7), 16);
     const hsp = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b))
+
     return hsp;
   }
 
-  if (hexColBrightness(colorBlue) > 220) {
+  if (hexColBrightness(colorBlue) > 200) {
     colorBlueBg = '#000000';
   }
 
-  if (hexColBrightness(colorRed) > 220) {
+  if (hexColBrightness(colorRed) > 200) {
     colorRedBg = '#000000';
   }
 

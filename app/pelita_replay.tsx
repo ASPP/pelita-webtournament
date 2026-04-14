@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-import Pelita from './pelita';
-import { conv_game_state } from './pelita_msg';
+import PelitaMatch from './pelita_match';
+import { convertGameState } from './pelita_types';
 
 export const ColorMap = createContext({});
 
@@ -20,7 +20,7 @@ export default function PelitaReplay({ data }: { data: any[] }) {
   if (dataForced[1] && dataForced[1].team_names[1] && !dataForced[0].team_names[1]) {
     dataForced[0].team_names[1] = dataForced[1].team_names[1];
   }
-  const matchConv = useMemo(() => dataForced.map(conv_game_state), [dataForced]);
+  const matchConv = useMemo(() => dataForced.map(convertGameState), [dataForced]);
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -71,7 +71,7 @@ export default function PelitaReplay({ data }: { data: any[] }) {
 
   return (
     <div className="">
-      <Pelita do_animate={false} footer="" colors={colors} gameState={matchConv[position]}></Pelita>
+      <PelitaMatch do_animate={false} footer="" colors={colors} gameState={matchConv[position]}></PelitaMatch>
 
       <div className="flex flex-row gap-4 items-center justify-between">
         <button

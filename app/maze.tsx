@@ -4,7 +4,7 @@ import { animate, createScope, createTimeline, Scope, svg, Timeline } from 'anim
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
-import { Pos, Side } from './pelita_msg';
+import { Pos, Side } from './pelita_types';
 
 const cellSize = 26; // Size of each cell in the SVG
 const offset = 0.2 * cellSize; // Offset for the outline
