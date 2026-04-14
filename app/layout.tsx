@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
-import { Cascadia_Code, Abril_Fatface } from 'next/font/google';
+import localFont from "next/font/local";
+import { Abril_Fatface } from 'next/font/google';
 
 import './globals.css';
 import { DebugMessagesProvider } from './debugmessages';
@@ -17,11 +18,21 @@ function DevIndicator() {
 //   variable: '--font-roboto-mono',
 // })
 
-const cascadiaCode = Cascadia_Code({
-  subsets: ['latin', 'cyrillic'],
-  display: 'swap',
-  variable: '--font-cascadia-code',
-  weight: '400',
+export const cascadiaCode = localFont({
+  src: [
+    {
+      path: "../public/fonts/cascadia/CascadiaCode-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/cascadia/CascadiaCode-Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-cascadia-code",
+  display: "swap",
 });
 
 const abrilFatface = Abril_Fatface({
