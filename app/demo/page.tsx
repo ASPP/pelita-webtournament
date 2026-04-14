@@ -191,33 +191,14 @@ function DemoGame({
                 style={{
                   boxShadow: 'rgb(0 0 0 / 15%) 0px 0px 0px 1px, rgb(0 0 0 / 15%) 0px 8px 16px',
                 }}
-              >
-                <button
-                  className="inline-block"
-                  onClick={() => {
-                    setGameState(dummyGameState(16, 8));
-                  }}
-                >
-                  16x8
-                </button>
-                {' | '}
-                <button
-                  className="inline-block"
-                  onClick={() => {
-                    setGameState(dummyGameState(32, 16));
-                  }}
-                >
-                  32x16
-                </button>
-                {' | '}
-                <button
-                  className="inline-block"
-                  onClick={() => {
-                    setGameState(dummyGameState(64, 32));
-                  }}
-                >
-                  64x32
-                </button>
+              >{
+                [8, 12, 16, 24, 32].map((h) => (
+                  <button
+                    key={h}
+                    className='inline-block'
+                    onClick={() => {setGameState(dummyGameState(h * 2, h))}}>{`${h * 2}x${h}`}</button>
+                )).flatMap((el, i) => i == 0 ? [el] : [' | ', el])
+              }
               </div>
             </div>
           )}
