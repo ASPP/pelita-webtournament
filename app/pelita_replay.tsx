@@ -1,30 +1,43 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import PelitaMatch from './pelita_match';
-import { convertGameState } from './pelita_types';
+import { convertGameState, GameState } from './pelita_types';
 
-export const ColorMap = createContext({});
+type ColorMap = Record<string, string>
 
-export default function PelitaReplay({ data }: { data: any[] }) {
+export default function PelitaReplay({ src, colorMap }: { src: string, colorMap?: ColorMap }) {
   const [position, setPosition] = useState(0);
   const [started, setStarted] = useState(false);
   const delay = 40;
-  const colorMap = useContext(ColorMap);
 
-  const dataForced = data; //as ObserveGameStateL;
-  if (dataForced[1] && dataForced[1].team_names[0] && !dataForced[0].team_names[0]) {
-    dataForced[0].team_names[0] = dataForced[1].team_names[0];
-  }
-  if (dataForced[1] && dataForced[1].team_names[1] && !dataForced[0].team_names[1]) {
-    dataForced[0].team_names[1] = dataForced[1].team_names[1];
-  }
-  const matchConv = useMemo(() => dataForced.map(convertGameState), [dataForced]);
+  const [data, setData] = useState<GameState[]>();
+  const colors: [string, string] = ['rgb(94, 158, 217)', 'rgb(235, 90, 90)'];
+
+  colorMap ??= {};
+
+  useEffect(() => {
+    fetch(src)
+      .then((r) => r.json())
+      .then(content => {
+        if (content[1] && content[1].team_names[0] && !content[0].team_names[0]) {
+          content[0].team_names[0] = content[1].team_names[0];
+        }
+        if (content[1] && content[1].team_names[1] && !content[0].team_names[1]) {
+          content[0].team_names[1] = content[1].team_names[1];
+        }
+        const matchConv = content.map(convertGameState);
+
+        setData(matchConv)
+      });
+  }, [src]);
+
 
   useEffect(() => {
     const id = setTimeout(() => {
       if (!started) return;
+      if (!data) return;
 
       setPosition(state => {
         if (state + 1 < data.length) return state + 1;
@@ -38,40 +51,43 @@ export default function PelitaReplay({ data }: { data: any[] }) {
     return () => {
       clearTimeout(id);
     };
-  }, [position, started, data.length]);
+  }, [position, started, data]);
 
   function back() {
+    if (!data) return;
+
     setStarted(false);
     setPosition(s => Math.max(s - 1, 0));
   }
 
   function step() {
+    if (!data) return;
+
     setStarted(false);
     setPosition(s => Math.min(s + 1, data.length - 1));
   }
 
-  if (data.length == 0)
+  if (!data || data.length == 0)
     return (
       <p>
         <i>No match data</i>
       </p>
     );
 
-  const colors: [string, string] = ['rgb(94, 158, 217)', 'rgb(235, 90, 90)'];
+  if (data.length > 0) {
+    const team_specs: [string, string] = data[0].team_specs;
+    if (team_specs && team_specs[0] in colorMap) {
+      colors[0] = colorMap[team_specs[0] as keyof typeof colorMap];
+    }
 
-  const team_specs: [string, string] = data[0].team_specs;
-  // console.log(team_specs);
-  if (team_specs && team_specs[0] in colorMap) {
-    colors[0] = colorMap[team_specs[0] as keyof typeof colorMap];
-  }
-
-  if (team_specs && team_specs[1] in colorMap) {
-    colors[1] = colorMap[team_specs[1] as keyof typeof colorMap];
+    if (team_specs && team_specs[1] in colorMap) {
+      colors[1] = colorMap[team_specs[1] as keyof typeof colorMap];
+    }
   }
 
   return (
     <div className="">
-      <PelitaMatch do_animate={false} footer="" colors={colors} gameState={matchConv[position]}></PelitaMatch>
+      <PelitaMatch do_animate={false} footer="" colors={colors} gameState={data[position]}></PelitaMatch>
 
       <div className="flex flex-row gap-4 items-center justify-between">
         <button

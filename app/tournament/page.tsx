@@ -1,322 +1,250 @@
-"use client"
+'use client';
+
+import { createTimeline } from 'animejs';
+import Link from 'next/link';
+import React, { Reducer, useCallback, useEffect, useReducer } from 'react';
+
+import DebugFooter from '@/app/debugfooter';
+import DemoGame from '@/app/demo/page';
+import { useMessageReceiver,  replaceAnsi } from '@/app/message_receiver';
+import PelitaMatch from '@/app/pelita_match';
+import { convertGameState, GameState, TournamentMetadata } from '@/app/pelita_types';
+import SingleGame from '@/app/single-game';
+import TypewriterText from '@/app/typewritertext';
 
 
-import { ObserveGameStateL } from "@/app/pelita_types";
-import PelitaReplay from "@/app/pelita_replay";
+type PelitaState =
+  | 'initial'
+  | 'movie'
+  | 'intro'
+  | 'match'
+  | 'faulted'
+  | 'single-game'
+  | 'demo-columns';
+type PelitaEvent =
+  | 'start-movie'
+  | 'start-intro'
+  | 'game-playing'
+  | 'clear-page'
+  | 'fail'
+  | 'do-single-game'
+  | 'do-demo-columns';
 
-import match01 from "./round1-match01-20240831-185932.json";
-// import match02 from "./round1-match02-20240831-190026.json";
-// import match03 from "./round1-match03-20240831-190128.json";
-// import match04 from "./round1-match04-20240831-190254.json";
-// import match05 from "./round1-match05-20240831-190351.json";
-// import match06 from "./round1-match06-20240831-190445.json";
-// import match07 from "./round1-match07-20240831-190546.json";
-// import match08 from "./round1-match08-20240831-190639.json";
-// import match09 from "./round1-match09-20240831-190747.json";
-// import match10 from "./round1-match10-20240831-190845.json";
-// import matchb_01 from "./round2-match01-20240831-191004.json";
-// import matchb_02 from "./round2-match02-20240831-191214.json";
-// import matchb_03 from "./round2-match03-20240831-191322.json";
-// import matchb_04 from "./round2-match04-20240831-191433.json";
+const MAX_LINES = 20;
 
-const match02: ObserveGameStateL = [];
-const match03: ObserveGameStateL = [];
-const match04: ObserveGameStateL = [];
-const match05: ObserveGameStateL = [];
-const match06: ObserveGameStateL = [];
-const match07: ObserveGameStateL = [];
-const match08: ObserveGameStateL = [];
-const match09: ObserveGameStateL = [];
-const match10: ObserveGameStateL = [];
-const matchb_01: ObserveGameStateL = [];
-const matchb_02: ObserveGameStateL = [];
-const matchb_03: ObserveGameStateL = [];
-const matchb_04: ObserveGameStateL = [];
+const reducer: Reducer<PelitaState, PelitaEvent> = (state, event) => {
+  console.log(`${state} -> ${event}`);
+  switch (state) {
+    case 'initial':
+      if (event === 'start-movie') return 'movie';
+      if (event === 'do-demo-columns') return 'demo-columns';
+      if (event === 'start-intro') return 'intro';
+      if (event === 'do-single-game') return 'single-game';
+      break;
+    case 'movie':
+      if (event === 'start-intro') return 'intro';
+      break;
+    case 'intro':
+      if (event === 'game-playing') return 'match';
+      if (event === 'clear-page') return 'intro';
+      break;
+    case 'match':
+      if (event === 'game-playing') return 'match';
+      if (event === 'clear-page') return 'intro';
+      break;
+  }
+  return state;
+};
 
-export default function Home() {
-  return (<>
-    <main className={`max-w-3xl mx-auto pt-10 xl:max-w-none xl:ml-0 xl:mr-[15.5rem] xl:pr-16 px-4 lg:px-24 py-4 lg:py-12 bg-white`}>
-      <div className="font-mono text-sm">
+function PelitaTournament() {
+  const initialState: PelitaState = 'initial';
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-        Καλησπέρα Rike, I am the Python drone. I am here to serve you.<br />
-        Welcome to the Heraklion Pelita tournament 2024<br />
-        This evening the teams are:<br />
-        #0: group0<br />
-        Johannes Kaminski<br />
-        Jason Charamis<br />
-        Francesco Alberti<br />
-        Emilia Jarochowska<br />
-        Larissa Behnke<br />
-        Naz Belkaya<br />
-        <br />
-        #1: MAYorMAYnot<br />
-        Stamatis Aliprantis<br />
-        Adrià Marly<br />
-        Karla Matic<br />
-        Polina Arbuzova<br />
-        Giovanni Ferrari<br />
-        Mirja Grote Lambers<br />
-        <br />
-        #2: EmptyStupidBots<br />
-        Ángel Blanco<br />
-        Romain Guiet<br />
-        Alessia Selmi<br />
-        Maksim Valialshchikov<br />
-        Patricia Brandl<br />
-        Anna Székely<br />
-        <br />
-        #3: The 3Botsketeers<br />
-        Antonin Fourcade<br />
-        Anna Bogdanova<br />
-        Stella Verkijk<br />
-        John Carl Begley<br />
-        Anthony Ciston<br />
-        Berkutay Mert<br />
-        <br />
-        #4: We cant believe 4isfor4UN<br />
-        Riccardo Cusinato<br />
-        Jonas Scherer<br />
-        Arianna Bienati<br />
-        Johannes Mehrer<br />
-        Victoria Shevchenko<br />
-        Sarah Ashcroft-Jones<br />
-        <br />
-        These were the teams. Now you ready for the fight?<br />
-        <br />
-        ROUND 1 (Everybody vs Everybody)<br />
-================================<br />
-<br />
-Starting match: The 3Botsketeers (group #3) vs group0 (group #0)<br />
+  const [typewriterText, setTypewriterText] = React.useState<string[]>([]);
 
-<PelitaReplay data={match01}></PelitaReplay>
+  const [gameState, setGameState] = React.useState<GameState>();
+  const [tournamentMetadata, setTournamentMetadata] = React.useState<TournamentMetadata>();
 
-‘The 3Botsketeers’ wins<br />
-<br />
-Ranking after 1 match (9 to go):<br />
-<pre><b>{`           The 3Botsketeers`}</b>{` 2
-  `}<b>{`                   group0`}</b>{` 0
-                MAYorMAYnot 0
-            EmptyStupidBots 0
-  We cant believe 4isfor4UN 0
-`}</pre>
-  <br />
-Starting match: EmptyStupidBots (group #2) vs MAYorMAYnot (group #1)<br />
+  const bg_color = (state => {
+    switch (state) {
+      case 'initial':
+      case 'movie':
+      case 'intro':
+        return '#000';
 
-<PelitaReplay data={match02}></PelitaReplay>
+      case 'match':
+      default:
+        return '#fff';
+    }
+  })(state);
 
-‘EmptyStupidBots’ wins<br />
-<br />
-Ranking after 2 matches (8 to go):<br />
-<pre><b>{`            EmptyStupidBots`}</b>{` 2
-           The 3Botsketeers 2
-                     group0 0
-  `}<b>{`              MAYorMAYnot`}</b>{` 0
-  We cant believe 4isfor4UN 0
-  `}</pre>
-  <br />
-Starting match: group0 (group #0) vs We cant believe 4isfor4UN (group #4)<br />
+  const crt = (state => {
+    switch (state) {
+      case 'initial':
+      case 'intro':
+      case 'demo-columns':
+      case 'movie':
+        return 'crt';
 
-<PelitaReplay data={match03}></PelitaReplay>
+      case 'match':
+      default:
+        return '';
+    }
+  })(state);
 
-‘We cant believe 4isfor4UN’ wins<br />
-<br />
-Ranking after 3 matches (7 to go):<br />
-<pre>{`            EmptyStupidBots 2
-           The 3Botsketeers 2
-  `}<b>{`We cant believe 4isfor4UN`}</b>{` 2
-  `}<b>{`                   group0`}</b>{` 0
-                MAYorMAYnot 0
-`}</pre>
-                <br />
-Starting match: The 3Botsketeers (group #3) vs EmptyStupidBots (group #2)<br />
+  let color1 = 'rgb(94, 158, 217)';
+  let color2 = 'rgb(235, 90, 90)';
 
-<PelitaReplay data={match04}></PelitaReplay>
+  if (typeof tournamentMetadata !== 'undefined') {
+    for (const [_teamId, team] of Object.entries(tournamentMetadata.teams)) {
+      if (team.spec == gameState?.team_specs[0]) {
+        console.log('Team blue (%s) is %s', team.spec, team.color);
+        if (team.color) color1 = team.color;
+      }
+      if (team.spec == gameState?.team_specs[1]) {
+        console.log('Team red (%s) is %s', team.spec, team.color);
+        if (team.color) color2 = team.color;
+      }
+    }
 
-‘The 3Botsketeers’ wins<br />
-<br />
-Ranking after 4 matches (6 to go):<br />
-<pre><b>{`           The 3Botsketeers`}</b>{` 4
-  `}<b>{`          EmptyStupidBots`}</b>{` 2
-  We cant believe 4isfor4UN 2
-                     group0 0
-                MAYorMAYnot 0
-                `}</pre>
-                <br />
-Starting match: MAYorMAYnot (group #1) vs We cant believe 4isfor4UN (group #4)<br />
+    console.log(tournamentMetadata);
+  }
 
-<PelitaReplay data={match05}></PelitaReplay>
+  const colors: [string, string] = [color1, color2];
 
-‘MAYorMAYnot’ wins<br />
-<br />
-Ranking after 5 matches (5 to go):<br />
-<pre>{`           The 3Botsketeers 4
-  `}<b>{`              MAYorMAYnot`}</b>{` 2
-            EmptyStupidBots 2
-  `}<b>{`We cant believe 4isfor4UN`}</b>{` 2
-                     group0 0
-                     `}</pre>
-<br />
-Starting match: EmptyStupidBots (group #2) vs group0 (group #0)<br />
+  useEffect(() => {
+    createTimeline().add(
+      'body',
+      {
+        background: bg_color,
+        easing: 'easeout',
+        duration: 5000,
+      },
+      3000,
+    );
+  }, [bg_color]);
 
-<PelitaReplay data={match06}></PelitaReplay>
+  const updateGameState = useCallback((gameState: GameState) => {
+    dispatch('game-playing');
+    setGameState(oldState => {
+      if (oldState?.game_uuid === gameState.game_uuid) {
+        // we keep the walls array so that the effects are not re-run
+        // TODO: Maybe the effect should depend on only the game_uuid having changed?
+        const newState = {
+          ...gameState,
+          walls: oldState.walls,
+        };
+        return newState;
+      }
+      return gameState;
+    });
+  }, []);
 
-‘EmptyStupidBots’ wins<br />
-<br />
-Ranking after 6 matches (4 to go):<br />
-<pre><b>{`            EmptyStupidBots`}</b>{` 4
-           The 3Botsketeers 4
-                MAYorMAYnot 2
-  We cant believe 4isfor4UN 2
-  `}<b>{`                   group0`}</b>{` 0
-  `}</pre>
-<br />
-Starting match: MAYorMAYnot (group #1) vs The 3Botsketeers (group #3)<br />
+  const updateMessage = useCallback((msg: string) => {
+    const split_str = msg.split(/\r?\n/);
+    setTypewriterText(oldText => [...oldText, ...split_str]);
+  }, []);
 
-<PelitaReplay data={match07}></PelitaReplay>
+  const doClearPage = useCallback(() => {
+    dispatch('clear-page');
+    setTypewriterText([]);
+  }, []);
 
-‘The 3Botsketeers’ wins<br />
-<br />
-Ranking after 7 matches (3 to go):<br />
-<pre><b>{`           The 3Botsketeers`}</b>{` 6
-            EmptyStupidBots 4
-  `}<b>{`              MAYorMAYnot`}</b>{` 2
-  We cant believe 4isfor4UN 2
-                     group0 0
-                     `}</pre>
-<br />
-Starting match: We cant believe 4isfor4UN (group #4) vs EmptyStupidBots (group #2)<br />
+  const data = useMessageReceiver();
 
-<PelitaReplay data={match08}></PelitaReplay>
+  useEffect(() => {
+    if (!data) return;
 
-‘EmptyStupidBots’ wins<br />
-<br />
-Ranking after 8 matches (2 to go):<br />
-<pre><b>{`            EmptyStupidBots`}</b>{` 6
-           The 3Botsketeers 6
-                MAYorMAYnot 2
-  `}<b>{`We cant believe 4isfor4UN`}</b>{` 2
-                     group0 0
-                     `}</pre>
-<br />
-Starting match: group0 (group #0) vs MAYorMAYnot (group #1)<br />
+    if (!(data.__action__ === 'INIT'))
+      console.log(data.__action__);
 
-<PelitaReplay data={match09}></PelitaReplay>
+    if (data.__action__ === 'SPEAK') {
+      // Replacing all ANSI code here
+      updateMessage(replaceAnsi(data.__data__));
+    } else if (data.__action__ === 'CLEAR') {
+      doClearPage();
+    } else if (data.__action__ === 'observe') {
+      const conv = convertGameState(data.__data__);
+      updateGameState(conv);
+    } else if (data.__action__ === 'INIT') {
+      const metadata = data.__data__;
+      console.log('Setting metadata', metadata);
+      setTournamentMetadata(metadata);
+      doClearPage();
+    }
+  }, [data]);
 
-‘MAYorMAYnot’ wins<br />
-<br />
-Ranking after 9 matches (1 to go):<br />
-<pre>{`            EmptyStupidBots 6
-           The 3Botsketeers 6
-  `}<b>{`              MAYorMAYnot`}</b>{` 4
-  We cant believe 4isfor4UN 2
-  `}<b>{`                   group0`}</b>{` 0
-  `}</pre>
-<br />
-Starting match: We cant believe 4isfor4UN (group #4) vs The 3Botsketeers (group #3)<br />
+  const doDemoColumns = () => {
+    dispatch('do-demo-columns');
+  };
 
-<PelitaReplay data={match10}></PelitaReplay>
+  function showIntro() {
+    return <TypewriterText text={typewriterText} lines={MAX_LINES}></TypewriterText>;
+  }
 
-‘The 3Botsketeers’ wins<br />
-<br />
-Ranking after 10 matches (0 to go):<br />
-<pre><b>{`           The 3Botsketeers`}</b>{` 8
-            EmptyStupidBots 6
-                MAYorMAYnot 4
-  `}<b>{`We cant believe 4isfor4UN`}</b>{` 2
-                     group0 0
-                     `}</pre>
-<br />
-ROUND 2 (K.O.)<br />
-==============<br />
-<br />
-<pre>{` The 3Botsketeers ─────────┐
-                           ├─ ??? ┐
- We cant believe 4isfor4UN ┘      │
-                                  ├─ ??? ┐
- EmptyStupidBots ──────────┐      │      │  ┏━━━━━┓
-                           ├─ ??? ┘      ├──┨ ??? ┃
- MAYorMAYnot ──────────────┘             │  ┗━━━━━┛
-                                         │
- group0 ─────────────────────────────────┘
- `}</pre>
-<br />
-The 3Botsketeers v We cant believe 4isfor4UN<br />
-<br />
-Starting match: We cant believe 4isfor4UN (group #4) vs The 3Botsketeers (group #3)<br />
+  function demoColumns() {
+    return (
+      <TypewriterText
+        text={[
+          '123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789',
+        ]}
+        lines={MAX_LINES}
+      ></TypewriterText>
+    );
+  }
 
-<PelitaReplay data={matchb_01}></PelitaReplay>
+  return (
+    <>
+      <main className={`min-h-screen flex-col items-center justify-between px-24 py-12 ${crt} crt-blurry-area`}>
+        <div className="z-10 w-full max-w-screen items-center justify-between font-mono text-sm">
+          {state == 'initial' && (
+            <>
+              <div>
+                <button onClick={() => { dispatch('start-movie'); }}>Start Pelita Tournament</button>{' '}
+                <button onClick={() => { dispatch('start-intro'); }}>(quick)</button>
+              </div>
+              <div>
+                <button onClick={doDemoColumns}>Demo Columns</button>{' '}
+              </div>
+              <div>
+                <button onClick={() => { dispatch('do-single-game'); }}>Single game</button>
+              </div>
+            </>
+          )}
+          {state === 'intro' && showIntro()}
+          {state === 'demo-columns' && demoColumns()}
 
-‘We cant believe 4isfor4UN’ wins<br />
-<pre>{` The 3Botsketeers ─────────┐
-                           ├─`}<b>{` We cant believe 4isfor4UN `}</b>{`┐
- We cant believe 4isfor4UN ┘                            │
-                                                        ├─ ??? ┐
- EmptyStupidBots ──────────┐                            │      │  ┏━━━━━┓
-                           ├─ ??? ──────────────────────┘      ├──┨ ??? ┃
- MAYorMAYnot ──────────────┘                                   │  ┗━━━━━┛
-                                                               │
- group0 ───────────────────────────────────────────────────────┘
- `}</pre>
-<br />
-EmptyStupidBots v MAYorMAYnot<br />
-<br />
-Starting match: EmptyStupidBots (group #2) vs MAYorMAYnot (group #1)<br />
+          {state === 'single-game' && <SingleGame />}
 
-<PelitaReplay data={matchb_02}></PelitaReplay>
+          {state == 'match' && (
+            <div>
+              <h1 className="fixed top-0 left-0 z-20 w-full px-24 py-4 text-xl">
+                ᗧ Pelita Tournament {tournamentMetadata?.location}
+              </h1>
 
-‘MAYorMAYnot’ wins<br />
-<pre>{` The 3Botsketeers ─────────┐
-                           ├─ We cant believe 4isfor4UN ┐
- We cant believe 4isfor4UN ┘                            │
-                                                        ├─ ??? ┐
- EmptyStupidBots ──────────┐                            │      │  ┏━━━━━┓
-                           ├─`}<b>{` MAYorMAYnot ──────────────`}</b>{`┘      ├──┨ ??? ┃
- MAYorMAYnot ──────────────┘                                   │  ┗━━━━━┛
-                                                               │
- group0 ───────────────────────────────────────────────────────┘
-`}</pre>
-<br />
-We cant believe 4isfor4UN v MAYorMAYnot<br />
-<br />
-Starting match: We cant believe 4isfor4UN (group #4) vs MAYorMAYnot (group #1)<br />
+              {gameState && tournamentMetadata && (
+                <PelitaMatch
+                  gameState={gameState}
+                  colors={colors}
+                  footer={`ᗧ Pelita Tournament, ${tournamentMetadata.location} ${tournamentMetadata.date}`}
+                  do_animate={true}
+                ></PelitaMatch>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
 
-<PelitaReplay data={matchb_03}></PelitaReplay>
+      <DebugFooter />
 
-‘MAYorMAYnot’ wins<br />
-<pre>{` The 3Botsketeers ─────────┐
-                           ├─ We cant believe 4isfor4UN ┐
- We cant believe 4isfor4UN ┘                            │
-                                                        ├─`}<b>{` MAYorMAYnot `}</b>{`┐
- EmptyStupidBots ──────────┐                            │              │  ┏━━━━━┓
-                           ├─ MAYorMAYnot ──────────────┘              ├──┨ ??? ┃
- MAYorMAYnot ──────────────┘                                           │  ┗━━━━━┛
-                                                                       │
- group0 ───────────────────────────────────────────────────────────────┘
- `}</pre>
-<br />
-MAYorMAYnot v group0<br />
-<br />
-Starting match: MAYorMAYnot (group #1) vs group0 (group #0)<br />
-
-<PelitaReplay data={matchb_04}></PelitaReplay>
-
-‘MAYorMAYnot’ wins<br />
-<pre>{` The 3Botsketeers ─────────┐
-                           ├─ We cant believe 4isfor4UN ┐
- We cant believe 4isfor4UN ┘                            │
-                                                        ├─ MAYorMAYnot ┐
- EmptyStupidBots ──────────┐                            │              │  ┏━━━━━━━━━━━━━┓
-                           ├─ MAYorMAYnot ──────────────┘              ├──┨`}<b>{` MAYorMAYnot `}</b>{`┃
- MAYorMAYnot ──────────────┘                                           │  ┗━━━━━━━━━━━━━┛
-                                                                       │
- group0 ───────────────────────────────────────────────────────────────┘
- `}</pre>
-<br />
-The winner of the Heraklion Pelita tournament is... The winner of the Heraklion Pelita tournament is...<br />
-group #1: MAYorMAYnot. Congratulations<br />
-Εις το επανιδείν Rike. It was a pleasure to serve you.<br />
-
-</div>
-</main>
-</>);
+      {state == 'movie' && (
+        <aside className="video-overlay">
+          <video autoPlay controls onEnded={() => { dispatch('start-intro'); }}>
+            <source src={'Pelita Supercut ASPP.mp4'} type="video/mp4" />
+          </video>
+        </aside>
+      )}
+    </>
+  );
 }
+export default PelitaTournament;

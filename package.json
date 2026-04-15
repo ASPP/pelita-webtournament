@@ -12,7 +12,11 @@
     "knip": "knip"
   },
   "dependencies": {
+    "@mdx-js/loader": "^3.1.1",
+    "@mdx-js/react": "^3.1.1",
+    "@next/mdx": "^16.1.6",
     "@tailwindcss/postcss": "^4.2.1",
+    "@types/mdx": "^2.0.13",
     "@uiw/react-color-compact": "^2.9.5",
     "animejs": "^4.2.0",
     "color-name-to-code": "^1.0.1",
@@ -20,6 +24,8 @@
     "next": "16.1.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "remark-frontmatter": "^5.0.0",
+    "remark-mdx-frontmatter": "^5.2.0",
     "tailwindcss": "^4.2.1",
     "use-next-sse": "^1.0.2",
     "uuid": "^13.0.0"

@@ -22,21 +22,11 @@ await fs.copy(path.join(ROOT, 'app'), path.join(TMP, 'app'), {
 // Copy needed support folders
 await fs.copy(path.join(ROOT, 'public'), path.join(TMP, 'public'));
 await fs.copy(path.join(ROOT, 'lib'), path.join(TMP, 'lib'));
+await fs.copy(path.join(ROOT, 'content'), path.join(TMP, 'content'));
+await fs.copy(path.join(ROOT, 'mdx-components.tsx'), path.join(TMP, 'mdx-components.tsx'));
 
 // Write static config
-await fs.writeFile(
-  path.join(TMP, 'next.config.js'),
-  `
-module.exports = {
-  output: "export",
-  // basePath: process.env.BASE_PATH || "",
-  basePath: "/pelita-webtournament",
-  images: {
-    unoptimized: true,
-  },
-};
-`,
-);
+await fs.copy(path.join(ROOT, 'next.config.static.ts'), path.join(TMP, 'next.config.ts'));
 
 // Copy tsconfig (for @ import resolution)
 await fs.copy(path.join(ROOT, 'tsconfig.json'), path.join(TMP, 'tsconfig.json'));
