@@ -5,6 +5,9 @@
   font-size: 20px;
   letter-spacing: 1px;
   line-height: 1;
+
+  color: #00ff00;
+  text-shadow: 0 0 10px #00ff00;
 }
 
 .text_animation .letter {

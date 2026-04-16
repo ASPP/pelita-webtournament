@@ -1,31 +1,29 @@
 'use client';
 
 import { createTimeline } from 'animejs';
-import Link from 'next/link';
 import { motion } from 'motion/react';
 import React, { Reducer, useCallback, useEffect, useReducer } from 'react';
 
 import DebugFooter from '@/app/debugfooter';
-import DemoGame from '@/app/demo/page';
-import { useMessageReceiver,  replaceAnsi } from '@/app/message_receiver';
+import { useMessageReceiver, replaceAnsi } from '@/app/message_receiver';
 import PelitaMatch from '@/app/pelita_match';
-import { convertGameState, GameState, TournamentMetadata } from '@/app/pelita_types';
+import { convertGameState, GameState, TeamMetadata, TournamentMetadata } from '@/app/pelita_types';
 import SingleGame from '@/app/single-game';
 import TypewriterText from '@/app/typewritertext';
 import { ColoredDot } from '@/app/utils/utils';
 
-
 type PelitaState =
   | 'initial'
   | 'movie'
-  | 'intro'
+  | 'drone-messages'
   | 'match'
   | 'faulted'
   | 'single-game'
   | 'demo-columns';
 type PelitaEvent =
   | 'start-movie'
-  | 'start-intro'
+  | 'start-drone'
+  | 'video-error'
   | 'game-playing'
   | 'clear-page'
   | 'fail'
@@ -40,19 +38,20 @@ const reducer: Reducer<PelitaState, PelitaEvent> = (state, event) => {
     case 'initial':
       if (event === 'start-movie') return 'movie';
       if (event === 'do-demo-columns') return 'demo-columns';
-      if (event === 'start-intro') return 'intro';
+      if (event === 'start-drone') return 'drone-messages';
       if (event === 'do-single-game') return 'single-game';
       break;
     case 'movie':
-      if (event === 'start-intro') return 'intro';
+      if (event === 'start-drone') return 'drone-messages';
+      if (event === 'video-error') return 'initial';
       break;
-    case 'intro':
+    case 'drone-messages':
       if (event === 'game-playing') return 'match';
-      if (event === 'clear-page') return 'intro';
+      if (event === 'clear-page') return 'drone-messages';
       break;
     case 'match':
       if (event === 'game-playing') return 'match';
-      if (event === 'clear-page') return 'intro';
+      if (event === 'clear-page') return 'drone-messages';
       break;
   }
   return state;
@@ -61,9 +60,13 @@ const reducer: Reducer<PelitaState, PelitaEvent> = (state, event) => {
 function TeamReadyness({ teams }: { teams?: TeamMetadata[] }) {
   if (!teams) return <i>Not connected</i>;
 
-  return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>{
-    Object.entries(teams).map(([_id, team]) => <ColoredDot key={team.spec} color={team.color} />)
-  }</motion.div>
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      {Object.entries(teams).map(([_id, team]) => (
+        <ColoredDot key={team.spec} color={team.color} />
+      ))}
+    </motion.div>
+  );
 }
 
 function PelitaTournament() {
@@ -75,13 +78,13 @@ function PelitaTournament() {
   const [gameState, setGameState] = React.useState<GameState>();
   const [tournamentMetadata, setTournamentMetadata] = React.useState<TournamentMetadata>();
 
-  const [apiLocation, setApiLocation] = React.useState("")
+  const [apiLocation, setApiLocation] = React.useState('');
 
   const bg_color = (state => {
     switch (state) {
       case 'initial':
       case 'movie':
-      case 'intro':
+      case 'drone-messages':
         return '#000';
 
       case 'match':
@@ -93,7 +96,7 @@ function PelitaTournament() {
   const crt = (state => {
     switch (state) {
       case 'initial':
-      case 'intro':
+      case 'drone-messages':
       case 'demo-columns':
       case 'movie':
         return 'crt';
@@ -128,7 +131,7 @@ function PelitaTournament() {
     // window is not available during pre-rendering
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setApiLocation(`${window.location.protocol}://${window.location.host}/api/collect`);
-  }, [])
+  }, []);
 
   useEffect(() => {
     createTimeline().add(
@@ -170,11 +173,13 @@ function PelitaTournament() {
 
   const data = useMessageReceiver();
 
+  if (data && data.__action__ !== 'observe') console.log(data.__action__);
+
   useEffect(() => {
+    // We use an effect so that we don’t act multiple times on new data.
     if (!data) return;
 
-    if (!(data.__action__ === 'INIT'))
-      console.log(data.__action__);
+    if (!(data.__action__ === 'observe')) console.log(data.__action__);
 
     if (data.__action__ === 'SPEAK') {
       // Replacing all ANSI code here
@@ -190,36 +195,53 @@ function PelitaTournament() {
       setTournamentMetadata(metadata);
       doClearPage();
     }
-  }, [data]);
+  }, [data, doClearPage, updateGameState, updateMessage]);
 
   const doDemoColumns = () => {
     dispatch('do-demo-columns');
   };
 
-  function showIntro() {
+  function droneMessages() {
     return <TypewriterText text={typewriterText} lines={MAX_LINES}></TypewriterText>;
   }
 
   function demoColumns() {
     return (
-      <TypewriterText
-        text={[
-          '123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789',
-        ]}
-        lines={MAX_LINES}
-      ></TypewriterText>
+      <>
+        <TypewriterText
+          text={[
+            '123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789',
+          ]}
+          lines={MAX_LINES}
+        ></TypewriterText>
+        <p>Normal text</p>
+      </>
     );
   }
 
   return (
     <>
-      <main className={`min-h-screen flex-col items-center justify-between px-24 py-12 ${crt} crt-blurry-area`}>
-        <div className="z-10 w-full max-w-screen items-center justify-between font-mono text-sm">
+      <main
+        className={`min-h-screen flex-col items-center justify-between px-24 py-12 ${crt} crt-blurry-area`}
+      >
+        <div className="z-10 w-full max-w-screen items-center justify-between font-mono text-base">
           {state == 'initial' && (
             <>
               <div>
-                <button onClick={() => { dispatch('start-movie'); }}>Start Pelita Tournament</button>{' '}
-                <button onClick={() => { dispatch('start-intro'); }}>(quick)</button>
+                <button
+                  onClick={() => {
+                    dispatch('start-movie');
+                  }}
+                >
+                  Start Pelita Tournament
+                </button>{' '}
+                <button
+                  onClick={() => {
+                    dispatch('start-drone');
+                  }}
+                >
+                  (no intro)
+                </button>
               </div>
               <div>
                 <TeamReadyness teams={tournamentMetadata?.teams} />
@@ -229,11 +251,17 @@ function PelitaTournament() {
                 <button onClick={doDemoColumns}>Demo Columns</button>{' '}
               </div>
               <div>
-                <button onClick={() => { dispatch('do-single-game'); }}>Single game</button>
+                <button
+                  onClick={() => {
+                    dispatch('do-single-game');
+                  }}
+                >
+                  Single game
+                </button>
               </div>
             </>
           )}
-          {state === 'intro' && showIntro()}
+          {state === 'drone-messages' && droneMessages()}
           {state === 'demo-columns' && demoColumns()}
 
           {state === 'single-game' && <SingleGame />}
@@ -261,8 +289,18 @@ function PelitaTournament() {
 
       {state == 'movie' && (
         <aside className="video-overlay">
-          <video autoPlay controls onEnded={() => { dispatch('start-intro'); }}>
+          <video
+            autoPlay
+            controls
+            onEnded={() => {
+              dispatch('start-drone');
+            }}
+            onError={() => {
+              dispatch('video-error');
+            }}
+          >
             <source src={'Pelita Supercut ASPP.mp4'} type="video/mp4" />
+            <p>Video not found.</p>
           </video>
         </aside>
       )}
