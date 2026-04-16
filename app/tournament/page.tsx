@@ -222,7 +222,7 @@ function PelitaTournament() {
   return (
     <>
       <main
-        className={`min-h-screen flex-col items-center justify-between px-24 py-12 ${crt} crt-blurry-area`}
+        className={`min-h-screen flex-col items-center justify-between px-24 py-12 ${crt} crt-blurry-area dark:text-black`}
       >
         <div className="z-10 w-full max-w-screen items-center justify-between font-mono text-base">
           {state == 'initial' && (
