@@ -2,7 +2,7 @@
 
 import { createTimeline } from 'animejs';
 import { motion } from 'motion/react';
-import React, { Reducer, useCallback, useEffect, useReducer } from 'react';
+import { Reducer, useCallback, useEffect, useReducer, useState } from 'react';
 
 import DebugFooter from '@/app/debugfooter';
 import { useMessageReceiver, replaceAnsi } from '@/app/message_receiver';
@@ -73,12 +73,12 @@ function PelitaTournament() {
   const initialState: PelitaState = 'initial';
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  const [typewriterText, setTypewriterText] = React.useState<string[]>([]);
+  const [typewriterText, setTypewriterText] = useState<string[]>([]);
 
-  const [gameState, setGameState] = React.useState<GameState>();
-  const [tournamentMetadata, setTournamentMetadata] = React.useState<TournamentMetadata>();
+  const [gameState, setGameState] = useState<GameState>();
+  const [tournamentMetadata, setTournamentMetadata] = useState<TournamentMetadata>();
 
-  const [apiLocation, setApiLocation] = React.useState('');
+  const [apiLocation, setApiLocation] = useState('');
 
   const bg_color = (state => {
     switch (state) {
