@@ -2,6 +2,7 @@
 
 import { createTimeline } from 'animejs';
 import Link from 'next/link';
+import { motion } from 'motion/react';
 import React, { Reducer, useCallback, useEffect, useReducer } from 'react';
 
 import DebugFooter from '@/app/debugfooter';
@@ -11,6 +12,7 @@ import PelitaMatch from '@/app/pelita_match';
 import { convertGameState, GameState, TournamentMetadata } from '@/app/pelita_types';
 import SingleGame from '@/app/single-game';
 import TypewriterText from '@/app/typewritertext';
+import { ColoredDot } from '@/app/utils/utils';
 
 
 type PelitaState =
@@ -56,6 +58,14 @@ const reducer: Reducer<PelitaState, PelitaEvent> = (state, event) => {
   return state;
 };
 
+function TeamReadyness({ teams }: { teams?: TeamMetadata[] }) {
+  if (!teams) return <i>Not connected</i>;
+
+  return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>{
+    Object.entries(teams).map(([_id, team]) => <ColoredDot key={team.spec} color={team.color} />)
+  }</motion.div>
+}
+
 function PelitaTournament() {
   const initialState: PelitaState = 'initial';
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -64,6 +74,8 @@ function PelitaTournament() {
 
   const [gameState, setGameState] = React.useState<GameState>();
   const [tournamentMetadata, setTournamentMetadata] = React.useState<TournamentMetadata>();
+
+  const [apiLocation, setApiLocation] = React.useState("")
 
   const bg_color = (state => {
     switch (state) {
@@ -111,6 +123,12 @@ function PelitaTournament() {
   }
 
   const colors: [string, string] = [color1, color2];
+
+  useEffect(() => {
+    // window is not available during pre-rendering
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setApiLocation(`${window.location.protocol}://${window.location.host}/api/collect`);
+  }, [])
 
   useEffect(() => {
     createTimeline().add(
@@ -202,6 +220,10 @@ function PelitaTournament() {
               <div>
                 <button onClick={() => { dispatch('start-movie'); }}>Start Pelita Tournament</button>{' '}
                 <button onClick={() => { dispatch('start-intro'); }}>(quick)</button>
+              </div>
+              <div>
+                <TeamReadyness teams={tournamentMetadata?.teams} />
+                <p>POST messages to {apiLocation}</p>
               </div>
               <div>
                 <button onClick={doDemoColumns}>Demo Columns</button>{' '}

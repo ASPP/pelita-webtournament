@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useMessageReceiver } from '@/app/message_receiver';
 import PelitaMatch from '@/app/pelita_match';
 import { convertGameState, GameState, GameStats } from '@/app/pelita_types';
+import { ColoredDot } from '../utils/utils';
 
 function dummyGameState(width: number, height: number) {
   const gameStats: GameStats = {
@@ -149,7 +150,8 @@ function DemoGame({
   }, [data, updateGameState, liveDataMode]);
 
   return (
-    <div>
+    <main className={`min-h-screen flex-col items-center justify-between px-24 py-12 crt-blurry-area`}>
+        <div className="z-10 w-full max-w-screen items-center justify-between font-mono text-sm">
       <h1 className="fixed top-0 left-0 z-20 w-full px-24 py-4 text-xl">ᗧ Pelita Tournament</h1>
 
       <PelitaMatch
@@ -251,7 +253,7 @@ function DemoGame({
             }}
           >
             <span className={showColor1 ? 'underline' : ''}>
-              Color Bot1 <span style={{ color: color1 }}>⚫&#xFE0E;</span>
+              Color Bot1 <ColoredDot color={ color1 } />
             </span>
           </button>{' '}
           {showColor1 && (
@@ -277,7 +279,7 @@ function DemoGame({
             }}
           >
             <span className={showColor2 ? 'underline' : ''}>
-              Color Bot2 <span style={{ color: color2 }}>⚫&#xFE0E;</span>
+              Color Bot2 <ColoredDot color={ color2 } />
             </span>
           </button>{' '}
           {showColor2 && (
@@ -314,6 +316,7 @@ function DemoGame({
         </button>
       </div>
     </div>
+    </main>
   );
 }
 
