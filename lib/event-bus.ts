@@ -23,4 +23,4 @@ if (!globalForEventBus.__eventBus) {
   console.log('Gloabl EventBus initialized');
 }
 
-export const eventBus = globalForEventBus.__eventBus!;
+export const eventBus = globalForEventBus.__eventBus;

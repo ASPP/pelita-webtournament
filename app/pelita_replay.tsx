@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import PelitaMatch from './pelita_match';
-import { convertGameState, GameState } from './pelita_types';
+import { convertGameState, GameState, ObserveGameState } from './pelita_types';
 
 type ColorMap = Record<string, string>
 
@@ -18,13 +18,13 @@ export default function PelitaReplay({ src, colorMap }: { src: string, colorMap?
   colorMap ??= {};
 
   useEffect(() => {
-    fetch(src)
+    void fetch(src)
       .then((r) => r.json())
-      .then(content => {
-        if (content[1] && content[1].team_names[0] && !content[0].team_names[0]) {
+      .then((content: ObserveGameState[]) => {
+        if (content[1]?.team_names[0] && !content[0].team_names[0]) {
           content[0].team_names[0] = content[1].team_names[0];
         }
-        if (content[1] && content[1].team_names[1] && !content[0].team_names[1]) {
+        if (content[1]?.team_names[1] && !content[0].team_names[1]) {
           content[0].team_names[1] = content[1].team_names[1];
         }
         const matchConv = content.map(convertGameState);
@@ -76,12 +76,12 @@ export default function PelitaReplay({ src, colorMap }: { src: string, colorMap?
 
   if (data.length > 0) {
     const team_specs: [string, string] = data[0].team_specs;
-    if (team_specs && team_specs[0] in colorMap) {
-      colors[0] = colorMap[team_specs[0] as keyof typeof colorMap];
+    if (team_specs[0] in colorMap) {
+      colors[0] = colorMap[team_specs[0]];
     }
 
-    if (team_specs && team_specs[1] in colorMap) {
-      colors[1] = colorMap[team_specs[1] as keyof typeof colorMap];
+    if (team_specs[1] in colorMap) {
+      colors[1] = colorMap[team_specs[1]];
     }
   }
 

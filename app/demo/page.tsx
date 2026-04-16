@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useMessageReceiver } from '@/app/message_receiver';
 import PelitaMatch from '@/app/pelita_match';
 import { convertGameState, GameState, GameStats } from '@/app/pelita_types';
-import { ColoredDot } from '../utils/utils';
+import { ColoredDot } from '@/app/utils/utils';
 
 function dummyGameState(width: number, height: number) {
   const gameStats: GameStats = {
@@ -94,7 +94,7 @@ function DemoGame({
       },
       animationState ? 3000 : 0,
     );
-  }, [gameState]);
+  }, [animationState, gameState]);
 
   if (!liveDataMode) {
     switch (state) {

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
-import localFont from "next/font/local";
 import { Abril_Fatface } from 'next/font/google';
+import localFont from "next/font/local";
 
 import './globals.css';
 import { DebugMessagesProvider } from './debugmessages';
