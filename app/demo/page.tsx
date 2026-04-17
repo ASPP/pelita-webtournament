@@ -98,7 +98,7 @@ function DemoGame({
     return () => {
       tl.revert();
     };
-  }, [animationState, gameState]);
+  }, [animationState, gameState.game_uuid]);
 
   if (!liveDataMode) {
     switch (state) {

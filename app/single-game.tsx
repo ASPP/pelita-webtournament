@@ -37,7 +37,7 @@ function SingleGame() {
     return () => {
       tl.revert();
     };
-  }, [animationState, gameState]);
+  }, [animationState, gameState?.game_uuid]);
 
   const colors: [string, string] = [color1, color2];
 
