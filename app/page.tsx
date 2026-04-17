@@ -6,13 +6,13 @@ export default function Home() {
       <div className="z-10 w-full max-w-screen items-center justify-between font-mono text-sm text-amber-100">
         <h1>Pelita tournament web viewer.</h1>
         <div className="mt-4">
-          <Link href="tournament">New Tournament</Link> <sup>*</sup>
+          <Link href="tournament">View live tournament</Link> <sup>*</sup>
         </div>
         <div>
-          <Link href="tournament-history">Tournament history</Link>
+          <Link href="tournament-history">ASPP tournament history</Link>
         </div>
         <div>
-          <Link href="demo">Demos</Link>
+          <Link href="demo">Demo maze</Link>
         </div>
         <div className="mt-8">
           <hr />
