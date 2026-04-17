@@ -134,7 +134,7 @@ function PelitaTournament() {
   }, []);
 
   useEffect(() => {
-    createTimeline().add(
+    const tl = createTimeline().add(
       'body',
       {
         background: bg_color,
@@ -143,6 +143,10 @@ function PelitaTournament() {
       },
       3000,
     );
+
+    return () => {
+      tl.revert();
+    };
   }, [bg_color]);
 
   const updateGameState = useCallback((gameState: GameState) => {

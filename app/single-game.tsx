@@ -24,7 +24,7 @@ function SingleGame() {
   const [showColor2, setShowColor2] = useState(false);
 
   useEffect(() => {
-    createTimeline().add(
+    const tl = createTimeline().add(
       'body',
       {
         background: '#fff',
@@ -33,7 +33,11 @@ function SingleGame() {
       },
       animationState ? 3000 : 0,
     );
-  }, [gameState]);
+
+    return () => {
+      tl.revert();
+    };
+  }, [animationState, gameState]);
 
   const colors: [string, string] = [color1, color2];
 

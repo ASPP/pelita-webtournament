@@ -85,7 +85,7 @@ function DemoGame({
   const [showColor2, setShowColor2] = useState(false);
 
   useEffect(() => {
-    createTimeline().add(
+    const tl = createTimeline().add(
       'body',
       {
         background: '#fff',
@@ -94,6 +94,10 @@ function DemoGame({
       },
       animationState ? 3000 : 0,
     );
+
+    return () => {
+      tl.revert();
+    };
   }, [animationState, gameState]);
 
   if (!liveDataMode) {
