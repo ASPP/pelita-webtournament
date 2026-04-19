@@ -31,6 +31,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     code: ({ children }: { children: string }) => {
       return <code dangerouslySetInnerHTML={{ __html: embolden(escapeHtml(children)) }}></code>;
     },
+    ul: props => <ul className="list-(--list-marker) list-inside" {...props}></ul>,
   };
 
   return <TournamentPage components={components}></TournamentPage>;

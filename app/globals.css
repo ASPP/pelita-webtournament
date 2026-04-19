@@ -6,6 +6,8 @@
   --color-blue: rgb(94, 158, 217);
   --color-red-bg: unset; /* rgb(255, 255, 255); */
   --color-blue-bg: unset; /* rgb(255, 255, 255); */
+
+  --list-marker: '- ';
 }
 
 /* eslint-disable-next-line css/no-invalid-at-rules */
@@ -13,6 +15,7 @@
   --font-serif: var(--font-abril-fatface);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-cascadia-code);
+  --default-mono-font-family:  var(--font-cascadia-code);
 }
 
 :root, :host {
