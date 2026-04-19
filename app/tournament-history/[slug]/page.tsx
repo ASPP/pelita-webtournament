@@ -3,6 +3,18 @@ import type { MDXComponents } from 'mdx/types';
 import fs from 'fs/promises';
 
 import PelitaReplay from '@/app/pelita_replay';
+function escapeHtml(unsafe: string) {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function embolden(text: string) {
+  return text.replace(/\*(.*?)\*/g, '<b>$1</b>');
+}
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -16,6 +28,9 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     PelitaReplay: props => (
       <PelitaReplay src={`${slug}/${props.src}`} colorMap={colorMap}></PelitaReplay>
     ),
+    code: ({ children }: { children: string }) => {
+      return <code dangerouslySetInnerHTML={{ __html: embolden(escapeHtml(children)) }}></code>;
+    },
   };
 
   return <TournamentPage components={components}></TournamentPage>;
