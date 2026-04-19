@@ -8,7 +8,6 @@ import { useMessageReceiver } from '@/app/message_receiver';
 import PelitaMatch from '@/app/pelita_match';
 import { convertGameState, GameState } from '@/app/pelita_types';
 
-
 function SingleGame() {
   const [animationState, setAnimationState] = useState(true);
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -24,15 +23,27 @@ function SingleGame() {
   const [showColor2, setShowColor2] = useState(false);
 
   useEffect(() => {
-    const tl = createTimeline().add(
-      'body',
-      {
-        background: '#fff',
-        easing: 'easeout',
-        duration: animationState ? 5000 : 0,
-      },
-      animationState ? 3000 : 0,
-    );
+    const tl = createTimeline()
+      .add(
+        'body',
+        {
+          background: '#fff',
+          easing: 'easeout',
+          duration: 5000,
+        },
+        3000,
+      )
+      .add(
+        '.reveal-with-animation',
+        {
+          opacity: 1,
+          easing: 'easeout',
+          duration: 5000,
+        },
+        3000,
+      );
+
+    if (!animationState) tl.complete();
 
     return () => {
       tl.revert();
@@ -57,16 +68,15 @@ function SingleGame() {
     });
   }, []);
 
-  const data = useMessageReceiver()
+  const data = useMessageReceiver();
   // console.log(data);
 
   useEffect(() => {
     if (data?.__action__ === 'observe') {
-    const conv = convertGameState(data.__data__);
-    updateGameState(conv);
+      const conv = convertGameState(data.__data__);
+      updateGameState(conv);
     }
   }, [data, updateGameState]);
-
 
   return (
     <div>
@@ -82,12 +92,12 @@ function SingleGame() {
           do_animate={animationState}
         ></PelitaMatch>
       )}
-{/*
+      {/*
       <ZMQReceiver
         sendGameState={updateGameState}
       ></ZMQReceiver> */}
 
-      <div>
+      <div className="opacity-0 reveal-with-animation">
         <button
           onClick={() => {
             setAnimationState(e => !e);

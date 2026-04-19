@@ -1,8 +1,8 @@
 'use client';
 
 import Compact from '@uiw/react-color-compact';
-import { createTimeline } from 'animejs';
-import { useCallback, useEffect, useState } from 'react';
+import { animate, createTimeline, Timeline } from 'animejs';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { useMessageReceiver } from '@/app/message_receiver';
@@ -10,7 +10,7 @@ import PelitaMatch from '@/app/pelita_match';
 import { convertGameState, GameState, GameStats } from '@/app/pelita_types';
 import { ColoredDot } from '@/app/utils/utils';
 
-function dummyGameState(width: number, height: number) {
+function dummyGameState(width: number, height: number, make_random = true) {
   const gameStats: GameStats = {
     score: [0, 0],
     num_errors: [0, 0],
@@ -31,10 +31,16 @@ function dummyGameState(width: number, height: number) {
   const walls: [number, number][] = [];
   for (let i = 0; i < width; i++) {
     for (let j = 0; j < height; j++) {
-      if (i == 0 || i == width - 1 || j == 0 || j == height - 1 || Math.random() < 0.3) {
-        if (!bots.some(el => el.every((val, idx) => val === [i, j][idx]))) walls.push([i, j]);
+      if (make_random) {
+        if (i == 0 || i == width - 1 || j == 0 || j == height - 1 || Math.random() < 0.3) {
+          if (!bots.some(el => el.every((val, idx) => val === [i, j][idx]))) walls.push([i, j]);
+        } else {
+          if (Math.random() < 0.1) food.push([i, j]);
+        }
       } else {
-        if (Math.random() < 0.1) food.push([i, j]);
+        if (i == 0 || i == width - 1 || j == 0 || j == height - 1) {
+          if (!bots.some(el => el.every((val, idx) => val === [i, j][idx]))) walls.push([i, j]);
+        }
       }
     }
   }
@@ -61,17 +67,12 @@ function dummyGameState(width: number, height: number) {
 
 type DemoState = 'Running' | 'BlueWins' | 'RedWins' | 'Draw';
 
-function DemoGame({
-  shape = [32, 16],
-  clearPage,
-}: {
-  shape?: [number, number];
-  clearPage: () => void;
-}) {
+function DemoGame({ shape = [32, 16] }: { shape?: [number, number] }) {
   const [width, height] = shape;
   const [state, setState] = useState<DemoState>('Running');
   const [animationState, setAnimationState] = useState(true);
-  const [gameState, setGameState] = useState(dummyGameState(width, height));
+
+  const [gameState, setGameState] = useState(dummyGameState(width, height, false));
 
   const [liveDataMode, setLiveDataMode] = useState(false);
 
@@ -84,23 +85,62 @@ function DemoGame({
   const [showColor1, setShowColor1] = useState(false);
   const [showColor2, setShowColor2] = useState(false);
 
+  const root = useRef<HTMLDivElement>(null);
+
+  const darkAnimation = useRef<Timeline>(null);
+  // I use this to force a rerender of the child component when a new animation is needed
+  const [rerenderMatchKey, setRerenderMatchKey] = useState(0);
+
   useEffect(() => {
-    const tl = createTimeline().add(
+    setGameState(dummyGameState(width, height));
+  }, [width, height]);
+
+  useEffect(() => {
+    darkAnimation.current = createTimeline().add(
       'body',
       {
         background: '#fff',
         easing: 'easeout',
-        duration: animationState ? 5000 : 0,
+        duration: 5000,
       },
-      animationState ? 3000 : 0,
+      3000,
     );
 
+    if (!animationState) darkAnimation.current.complete();
+
     return () => {
-      tl.revert();
+      darkAnimation.current?.revert();
     };
+  }, [animationState]);
+
+  const flipDark = () => {
+    darkAnimation.current?.restart();
+    // FIXME
+    onAnimate();
+    setRerenderMatchKey(v => v + 1);
+  };
+
+  const elements_to_reveal = useRef<Element[]>([]);
+
+  const addToReveal = (el: Element | null) => {
+    if (el && !elements_to_reveal.current.includes(el)) elements_to_reveal.current.push(el);
+  };
+
+  const onAnimate = useEffectEvent(() => {
+    animate(elements_to_reveal.current, {
+      opacity: [0, 1],
+      easing: 'easeout',
+      duration: animationState ? 5000 : 0,
+      delay: animationState ? 3000 : 0,
+    });
+  });
+
+  useEffect(() => {
+    // if (!do_animate) return;
+    onAnimate();
   }, [animationState, gameState.game_uuid]);
 
-  if (!liveDataMode) {
+  if (!liveDataMode && gameState) {
     switch (state) {
       case 'BlueWins':
         gameState.whowins = 0;
@@ -140,186 +180,200 @@ function DemoGame({
     });
   }, []);
 
-  const data = useMessageReceiver()
+  const data = useMessageReceiver();
   // console.log(data);
 
   useEffect(() => {
-    if (!liveDataMode)
-      return;
+    if (!liveDataMode) return;
 
     if (data?.__action__ === 'observe') {
-    const conv = convertGameState(data.__data__);
-    updateGameState(conv);
+      const conv = convertGameState(data.__data__);
+      updateGameState(conv);
     }
   }, [data, updateGameState, liveDataMode]);
 
   return (
-    <main className={`min-h-screen flex-col items-center justify-between px-24 py-12 crt-blurry-area dark:text-black`}>
-        <div className="z-10 w-full max-w-screen items-center justify-between font-mono text-sm">
-      <h1 className="fixed top-0 left-0 z-20 w-full px-24 py-4 text-xl">ᗧ Pelita Tournament</h1>
-
-      <PelitaMatch
-        gameState={gameState}
-        colors={colors}
-        footer={`ᗧ Pelita Tournament, location date`}
-        do_animate={animationState}
-      ></PelitaMatch>
-
-      <div>
-        <button
-          onClick={() => {
-            setGameState(dummyGameState(width, height));
-          }}
+    <main
+      className={`min-h-screen flex-col items-center justify-between px-24 py-12 crt-blurry-area dark:text-black`}
+    >
+      <div
+        ref={root}
+        className="z-10 w-full max-w-screen items-center justify-between font-mono text-sm"
+      >
+        <h1
+          ref={addToReveal}
+          className="fixed top-0 left-0 z-20 w-full px-24 py-4 text-xl opacity-0"
         >
-          Regen
-        </button>
-        {' | '}
-        <button
-          onClick={() => {
-            clearPage();
-          }}
-        >
-          Flip dark
-        </button>
-        {' | '}
-        <span className="relative inline-block">
+          ᗧ Pelita Tournament
+        </h1>
+
+        <PelitaMatch
+          key={rerenderMatchKey}
+          gameState={gameState}
+          colors={colors}
+          footer={`ᗧ Pelita Tournament, location date`}
+          do_animate={animationState}
+        ></PelitaMatch>
+
+        <div ref={addToReveal} className="opacity-0">
           <button
             onClick={() => {
-              setShowShape(old => !old);
+              setGameState(dummyGameState(width, height));
             }}
           >
-            <span className={showShape ? 'underline' : ''}>Shape</span>
-          </button>{' '}
-          {showShape && (
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50">
-              <div
-                className="flex backdrop-blur-sm p-2"
-                style={{
-                  boxShadow: 'rgb(0 0 0 / 15%) 0px 0px 0px 1px, rgb(0 0 0 / 15%) 0px 8px 16px',
-                }}
-              >{
-                [8, 12, 16, 24, 32].map((h) => (
-                  <button
-                    key={h}
-                    className='inline-block'
-                    onClick={() => {setGameState(dummyGameState(h * 2, h))}}>{`${h * 2}x${h}`}</button>
-                )).flatMap((el, i) => i == 0 ? [el] : [' | ', el])
-              }
+            Regen
+          </button>
+          {' | '}
+          <button
+            onClick={() => {
+              flipDark();
+            }}
+          >
+            Flip dark
+          </button>
+          {' | '}
+          <span className="relative inline-block">
+            <button
+              onClick={() => {
+                setShowShape(old => !old);
+              }}
+            >
+              <span className={showShape ? 'underline' : ''}>Shape</span>
+            </button>{' '}
+            {showShape && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50">
+                <div
+                  className="flex backdrop-blur-sm p-2"
+                  style={{
+                    boxShadow: 'rgb(0 0 0 / 15%) 0px 0px 0px 1px, rgb(0 0 0 / 15%) 0px 8px 16px',
+                  }}
+                >
+                  {[8, 12, 16, 24, 32]
+                    .map(h => (
+                      <button
+                        key={h}
+                        className="inline-block"
+                        onClick={() => {
+                          setGameState(dummyGameState(h * 2, h));
+                        }}
+                      >{`${h * 2}x${h}`}</button>
+                    ))
+                    .flatMap((el, i) => (i == 0 ? [el] : [' | ', el]))}
+                </div>
               </div>
-            </div>
-          )}
-        </span>
-        {' | '}
-        <button
-          onClick={() => {
-            setAnimationState(e => !e);
-          }}
-        >
-          Animation {animationState ? 'ON' : 'OFF'}
-        </button>
-        {' | '}
-        <button
-          onClick={() => {
-            setState('Running');
-          }}
-        >
-          <span className={liveDataMode ? 'line-through' : ''}>Running</span>
-        </button>
-        {' | '}
-        <button
-          onClick={() => {
-            setState('BlueWins');
-          }}
-        >
-          <span className={liveDataMode ? 'line-through' : ''}>Blue Wins</span>
-        </button>
-        {' | '}
-        <button
-          onClick={() => {
-            setState('RedWins');
-          }}
-        >
-          <span className={liveDataMode ? 'line-through' : ''}>Red Wins</span>
-        </button>
-        {' | '}
-        <button
-          onClick={() => {
-            setState('Draw');
-          }}
-        >
-          <span className={liveDataMode ? 'line-through' : ''}>Draw</span>
-        </button>
-        {' | '}
-        <span className="relative inline-block">
+            )}
+          </span>
+          {' | '}
           <button
             onClick={() => {
-              setShowColor1(old => !old);
+              setAnimationState(e => !e);
             }}
           >
-            <span className={showColor1 ? 'underline' : ''}>
-              Color Bot1 <ColoredDot color={ color1 } />
-            </span>
-          </button>{' '}
-          {showColor1 && (
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50">
-              <Compact
-                color={color1}
-                style={{
-                  width: '250px',
-                  boxShadow: 'rgb(0 0 0 / 15%) 0px 0px 0px 1px, rgb(0 0 0 / 15%) 0px 8px 16px',
-                }}
-                onChange={color => {
-                  setColor1(color.hex);
-                }}
-              />
-            </div>
-          )}
-        </span>
-        {' | '}
-        <span className="relative inline-block">
+            Animation {animationState ? 'ON' : 'OFF'}
+          </button>
+          {' | '}
           <button
             onClick={() => {
-              setShowColor2(old => !old);
+              setState('Running');
             }}
           >
-            <span className={showColor2 ? 'underline' : ''}>
-              Color Bot2 <ColoredDot color={ color2 } />
-            </span>
-          </button>{' '}
-          {showColor2 && (
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50">
-              <Compact
-                color={color2}
-                style={{
-                  width: '250px',
-                  boxShadow: 'rgb(0 0 0 / 15%) 0px 0px 0px 1px, rgb(0 0 0 / 15%) 0px 8px 16px',
-                }}
-                onChange={color => {
-                  setColor2(color.hex);
-                }}
-              />
-            </div>
-          )}
-        </span>
-        {' | '}
-        <button
-          onClick={() => {
-            setColor1(defaultColors[0]);
-            setColor2(defaultColors[1]);
-          }}
-        >
-          Reset Colors
-        </button>
-        {' | '}
-        <button
-          onClick={() => {
-            setLiveDataMode(e => !e);
-          }}
-        >
-          Live mode {liveDataMode ? 'ON' : 'OFF'}
-        </button>
+            <span className={liveDataMode ? 'line-through' : ''}>Running</span>
+          </button>
+          {' | '}
+          <button
+            onClick={() => {
+              setState('BlueWins');
+            }}
+          >
+            <span className={liveDataMode ? 'line-through' : ''}>Blue Wins</span>
+          </button>
+          {' | '}
+          <button
+            onClick={() => {
+              setState('RedWins');
+            }}
+          >
+            <span className={liveDataMode ? 'line-through' : ''}>Red Wins</span>
+          </button>
+          {' | '}
+          <button
+            onClick={() => {
+              setState('Draw');
+            }}
+          >
+            <span className={liveDataMode ? 'line-through' : ''}>Draw</span>
+          </button>
+          {' | '}
+          <span className="relative inline-block">
+            <button
+              onClick={() => {
+                setShowColor1(old => !old);
+              }}
+            >
+              <span className={showColor1 ? 'underline' : ''}>
+                Color Bot1 <ColoredDot color={color1} />
+              </span>
+            </button>{' '}
+            {showColor1 && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50">
+                <Compact
+                  color={color1}
+                  style={{
+                    width: '250px',
+                    boxShadow: 'rgb(0 0 0 / 15%) 0px 0px 0px 1px, rgb(0 0 0 / 15%) 0px 8px 16px',
+                  }}
+                  onChange={color => {
+                    setColor1(color.hex);
+                  }}
+                />
+              </div>
+            )}
+          </span>
+          {' | '}
+          <span className="relative inline-block">
+            <button
+              onClick={() => {
+                setShowColor2(old => !old);
+              }}
+            >
+              <span className={showColor2 ? 'underline' : ''}>
+                Color Bot2 <ColoredDot color={color2} />
+              </span>
+            </button>{' '}
+            {showColor2 && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50">
+                <Compact
+                  color={color2}
+                  style={{
+                    width: '250px',
+                    boxShadow: 'rgb(0 0 0 / 15%) 0px 0px 0px 1px, rgb(0 0 0 / 15%) 0px 8px 16px',
+                  }}
+                  onChange={color => {
+                    setColor2(color.hex);
+                  }}
+                />
+              </div>
+            )}
+          </span>
+          {' | '}
+          <button
+            onClick={() => {
+              setColor1(defaultColors[0]);
+              setColor2(defaultColors[1]);
+            }}
+          >
+            Reset Colors
+          </button>
+          {' | '}
+          <button
+            onClick={() => {
+              setLiveDataMode(e => !e);
+            }}
+          >
+            Live mode {liveDataMode ? 'ON' : 'OFF'}
+          </button>
+        </div>
       </div>
-    </div>
     </main>
   );
 }

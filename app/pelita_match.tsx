@@ -1,13 +1,29 @@
 'use client';
 
-import { createScope, createTimeline, Timeline } from 'animejs';
+import { animate } from 'animejs';
 import { colorNameToCode } from 'color-name-to-code';
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 
 import Maze from './maze';
 import { GameState } from './pelita_types';
 
 const defaultColors: [string, string] = ['rgb(94, 158, 217)', 'rgb(235, 90, 90)'];
+
+function hexColBrightness(hexCol: string) {
+  // TODO: The code only works with hex codes currently
+  if (!hexCol.startsWith('#')) return 127;
+  if (hexCol.length === 4) {
+    hexCol = '#' + hexCol[1] + hexCol[1] + hexCol[2] + hexCol[2] + hexCol[3] + hexCol[3];
+  }
+  if (hexCol.length !== 7) return 127;
+
+  const r = parseInt(hexCol.substring(1, 3), 16);
+  const g = parseInt(hexCol.substring(3, 5), 16);
+  const b = parseInt(hexCol.substring(5, 7), 16);
+  const hsp = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
+
+  return hsp;
+}
 
 export default function PelitaMatch({
   gameState,
@@ -22,46 +38,27 @@ export default function PelitaMatch({
 }) {
   let [colorBlue, colorRed] = colors;
   let [colorBlueBg, colorRedBg] = ['unset', 'unset'];
-  const [team1, team2] = gameState.team_names;
-  const [team_info1, team_info2] = gameState.team_infos;
-  const [group1, group2] = gameState.team_specs;
 
   const root = useRef<HTMLDivElement>(null);
-  const scope = useRef<any>(null);
-  const pathAnimationRef = useRef<Timeline>(null);
+
+  const elements_to_reveal = useRef<Element[]>([]);
+
+  const addToReveal = (el: Element | null) => {
+    if (el && !elements_to_reveal.current.includes(el)) elements_to_reveal.current.push(el);
+  };
+
+  const onAnimate = useEffectEvent(() => {
+    animate(elements_to_reveal.current, {
+      opacity: [0, 1],
+      duration: do_animate ? 2000 : 0,
+      delay: do_animate ? 3000 : 0,
+    });
+  });
 
   useEffect(() => {
-    if (!do_animate) return;
-    if (pathAnimationRef.current) return;
-
-    scope.current = createScope({ root }).add(self => {
-      if (pathAnimationRef.current) return;
-
-      const tl = createTimeline({ autoplay: false });
-
-      const elems_to_hide = ['.team-names', '.team-stats', '.footer'];
-
-      tl.set(elems_to_hide, {
-        opacity: 0,
-      }).add(
-        elems_to_hide,
-        {
-          opacity: [0, 1],
-          duration: 2000,
-        },
-        3000,
-      );
-
-      pathAnimationRef.current = tl;
-      tl.play();
-    });
-
-    return () => {
-      pathAnimationRef.current?.pause();
-      pathAnimationRef.current = null;
-      scope.current?.revert();
-    };
-  }, [do_animate]);
+    // if (!do_animate) return;
+    onAnimate();
+  }, [do_animate, gameState.game_uuid]);
 
   if (!colorBlue.includes('(') && !colorBlue.includes('#')) {
     // the animations do not like colour names
@@ -72,22 +69,6 @@ export default function PelitaMatch({
     colorRed = colorNameToCode(colorRed);
   }
 
-  function hexColBrightness(hexCol: string) {
-    // TODO: The code only works with hex codes currently
-    if (!hexCol.startsWith('#')) return 127;
-    if (hexCol.length === 4) {
-      hexCol = '#' + hexCol[1] + hexCol[1] + hexCol[2] + hexCol[2] + hexCol[3] + hexCol[3];
-    }
-    if (hexCol.length !== 7) return 127;
-
-    const r = parseInt(hexCol.substring(1, 3), 16);
-    const g = parseInt(hexCol.substring(3, 5), 16);
-    const b = parseInt(hexCol.substring(5, 7), 16);
-    const hsp = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b))
-
-    return hsp;
-  }
-
   if (hexColBrightness(colorBlue) > 200) {
     colorBlueBg = '#000000';
   }
@@ -95,6 +76,10 @@ export default function PelitaMatch({
   if (hexColBrightness(colorRed) > 200) {
     colorRedBg = '#000000';
   }
+
+  const [team1, team2] = gameState.team_names;
+  const [team_info1, team_info2] = gameState.team_infos;
+  const [group1, group2] = gameState.team_specs;
 
   return (
     <div
@@ -109,16 +94,20 @@ export default function PelitaMatch({
         } as React.CSSProperties
       }
     >
-      <h2 className="flex flex-row text-xl p-2 team-names">
+      <h2 className={`flex flex-row text-xl p-2 team-names opacity-0`} ref={addToReveal}>
         <span className="basis-1/2 text-right w-64 blue-bot">
-          <span className='p-1 blue-bot-bg'><small>{team_info1}</small> <b>{team1}</b> {gameState.game_stats.score[0]}</span>
+          <span className="p-1 blue-bot-bg">
+            <small>{team_info1}</small> <b>{team1}</b> {gameState.game_stats.score[0]}
+          </span>
         </span>
         <span className="basis-1 px-2">:</span>
         <span className="basis-1/2 text-left w-64 red-bot">
-          <span className='p-1 red-bot-bg'>{gameState.game_stats.score[1]} <b>{team2}</b> <small>{team_info2}</small></span>
+          <span className="p-1 red-bot-bg">
+            {gameState.game_stats.score[1]} <b>{team2}</b> <small>{team_info2}</small>
+          </span>
         </span>
       </h2>
-      <div className="flex flex-row text-xs team-stats">
+      <div className={`flex flex-row text-xs team-stats opacity-0`} ref={addToReveal}>
         <div className="basis-1/2 w-64 px-2">
           Errors: {gameState.game_stats.num_errors[0]}, Kills:{' '}
           {gameState.game_stats.kills[0] + gameState.game_stats.kills[2]}, Deaths:{' '}
@@ -149,7 +138,7 @@ export default function PelitaMatch({
         do_animate={do_animate}
       ></Maze>
 
-      <div className="flex flex-row text-xs text-slate-600 footer">
+      <div className={`flex flex-row text-xs text-slate-600 footer opacity-0`} ref={addToReveal}>
         <div className="basis-1/2 w-64 px-2">{footer}</div>
         <div className="basis-1/2 text-right w-64 px-2">
           Round {gameState.round}/{gameState.max_rounds}

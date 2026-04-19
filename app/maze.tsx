@@ -638,33 +638,6 @@ function Maze({
           4000,
         );
 
-      // reveal elements
-      tl.label('reveal')
-        .sync(
-          animate('.food-elems', {
-            opacity: [0, 1],
-            ease: 'linear',
-            duration: 2000,
-          }),
-          3000,
-        )
-        .sync(
-          animate('.bot-elems', {
-            opacity: [0, 1],
-            ease: 'linear',
-            duration: 2000,
-          }),
-          3500,
-        )
-        .sync(
-          animate('.maze-border', {
-            opacity: [0, 1],
-            ease: 'linear',
-            duration: 2000,
-          }),
-          3500,
-        );
-
       pathAnimationRef.current = tl;
       tl.play();
     });
@@ -673,6 +646,57 @@ function Maze({
       pathAnimationRef.current?.pause();
       pathAnimationRef.current = null;
       scope.current?.revert();
+    };
+  }, [game_uuid, do_animate]);
+
+  useEffect(() => {
+    if (!game_uuid) return;
+    // if (pathAnimationRef.current) return;
+    let tl: Timeline | undefined;
+    const scope = createScope({ root }).add(self => {
+      if (!root.current) return;
+
+      tl = createTimeline({ autoplay: false });
+
+      // reveal elements
+      tl.label('reveal')
+        .sync(
+          animate('.food-elems', {
+            opacity: 1,
+            ease: 'linear',
+            duration: 2000,
+          }),
+          3000,
+        )
+        .sync(
+          animate('.bot-elems', {
+            opacity: 1,
+            ease: 'linear',
+            duration: 2000,
+          }),
+          3500,
+        )
+        .sync(
+          animate('.maze-border', {
+            opacity: 1,
+            ease: 'linear',
+            duration: 2000,
+          }),
+          3500,
+        );
+
+      // pathAnimationRef.current = tl;
+      tl.play();
+
+      if (!do_animate) {
+        tl.complete();
+      }
+    });
+
+    return () => {
+      tl?.pause();
+      tl = undefined;
+      scope.revert();
     };
   }, [game_uuid, do_animate]);
 
@@ -716,8 +740,6 @@ function Maze({
           2: `url(#smooth-grad-${svgId})`,
         }[whowins ?? -1] ?? '#000';
     }
-
-    console.log(targetColor);
 
     scope2.current.add(() => {
       if (!root.current) return;
@@ -802,8 +824,11 @@ function Maze({
               stroke-linecap: round;
               stroke-linejoin: bevel;
             }
-            .food-elems {
-              fill-opacity: 1;
+            // .food-elems {
+              // fill-opacity: 1;
+            // }
+            .food-elems, .bot-elems, .maze-border {
+              opacity: 0;
             }
             .food {
               stroke: #000000;
