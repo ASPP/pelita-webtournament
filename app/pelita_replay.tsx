@@ -5,31 +5,38 @@ import { useEffect, useState } from 'react';
 import PelitaMatch from './pelita_match';
 import { GameState } from './pelita_types';
 
-type ColorMap = Record<string, string>
+type ColorMap = Record<string, string>;
 
-export default function PelitaReplay({ src, colorMap, preloadFrame }: { src: string, colorMap?: ColorMap, preloadFrame?: GameState }) {
+export default function PelitaReplay({
+  src,
+  colorMap,
+  preloadFrame,
+}: {
+  src: string;
+  colorMap?: ColorMap;
+  preloadFrame?: GameState;
+}) {
   const [position, setPosition] = useState(0);
   const [started, setStarted] = useState(false);
   const delay = 40;
 
-  const [gameData, setGameData] = useState<GameState[]>();
+  const [gameData, setGameData] = useState<GameState[]>(preloadFrame ? [preloadFrame] : []);
   const colors: [string, string] = ['rgb(94, 158, 217)', 'rgb(235, 90, 90)'];
 
   colorMap ??= {};
 
   useEffect(() => {
     void fetch(src)
-      .then((r) => r.json())
+      .then(r => r.json())
       .then((content: GameState[]) => {
-        setGameData(content)
+        setGameData(content);
       });
   }, [src]);
-
 
   useEffect(() => {
     const id = setTimeout(() => {
       if (!started) return;
-      if (!gameData) return;
+      if (gameData.length === 0) return;
 
       setPosition(state => {
         if (state + 1 < gameData.length) return state + 1;
@@ -46,27 +53,20 @@ export default function PelitaReplay({ src, colorMap, preloadFrame }: { src: str
   }, [position, started, gameData]);
 
   function back() {
-    if (!gameData) return;
+    if (gameData.length === 0) return;
 
     setStarted(false);
     setPosition(s => Math.max(s - 1, 0));
   }
 
   function step() {
-    if (!gameData) return;
+    if (gameData.length === 0) return;
 
     setStarted(false);
     setPosition(s => Math.min(s + 1, gameData.length - 1));
   }
 
-
-  let current;
-
-  if (!gameData && preloadFrame) {
-     current = preloadFrame;
-  } else if (gameData && gameData.length > 0) {
-     current = gameData[position]
-  } else {
+  if (gameData.length === 0) {
     return (
       <p>
         <i>No match data</i>
@@ -74,20 +74,17 @@ export default function PelitaReplay({ src, colorMap, preloadFrame }: { src: str
     );
   }
 
-  // console.log(current);
-  current.game_uuid ??= src;
-
-  if (gameData && gameData.length > 0) {
-    const team_specs: [string, string] = gameData[0].team_specs;
-    if (team_specs[0] in colorMap) {
-      colors[0] = colorMap[team_specs[0]];
-    }
-
-    if (team_specs[1] in colorMap) {
-      colors[1] = colorMap[team_specs[1]];
-    }
+  const team_specs: [string, string] = gameData[0].team_specs;
+  if (team_specs[0] in colorMap) {
+    colors[0] = colorMap[team_specs[0]];
   }
 
+  if (team_specs[1] in colorMap) {
+    colors[1] = colorMap[team_specs[1]];
+  }
+
+  const current = gameData[position];
+  current.game_uuid ??= src;
 
   return (
     <div className="">
