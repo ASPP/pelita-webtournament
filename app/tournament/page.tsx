@@ -292,7 +292,7 @@ function PelitaTournament() {
       <DebugFooter />
 
       {state == 'movie' && (
-        <aside className="video-overlay">
+        <aside className="absolute flex justify-center items-center inset-0">
           <video
             autoPlay
             controls
@@ -302,6 +302,7 @@ function PelitaTournament() {
             onError={() => {
               dispatch('video-error');
             }}
+            className='w-[90vw] h-[90vh] object-contain rounded-xl'
           >
             <source src={'Pelita Supercut ASPP.mp4'} type="video/mp4" />
             <p>Video not found.</p>
