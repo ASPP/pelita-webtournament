@@ -26,7 +26,7 @@ export interface ObserveGameState {
   walls: Pos[];
   shape: Pos;
   food: Pos[];
-  food_age: [Pos, number][];
+  food_age?: [Pos, number][];
   turn: number;
   round: number;
   gameover: boolean;
@@ -135,4 +135,16 @@ export function convertGameState(gs: ObserveGameState): GameState {
     whowins: gs.whowins ?? -1,
     gameover: gs.gameover,
   };
+}
+
+export function convertGameStateL(gsl: ObserveGameState[]): GameState[] {
+  const gameStateL = gsl.map(convertGameState);
+
+  if (gameStateL[1]?.team_names[0] && !gameStateL[0].team_names[0]) {
+    gameStateL[0].team_names[0] = gameStateL[1].team_names[0];
+  }
+  if (gameStateL[1]?.team_names[1] && !gameStateL[0].team_names[1]) {
+    gameStateL[0].team_names[1] = gameStateL[1].team_names[1];
+  }
+  return gameStateL;
 }

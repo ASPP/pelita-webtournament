@@ -20,16 +20,8 @@ export default function PelitaReplay({ src, colorMap }: { src: string, colorMap?
   useEffect(() => {
     void fetch(src)
       .then((r) => r.json())
-      .then((content: ObserveGameState[]) => {
-        if (content[1]?.team_names[0] && !content[0].team_names[0]) {
-          content[0].team_names[0] = content[1].team_names[0];
-        }
-        if (content[1]?.team_names[1] && !content[0].team_names[1]) {
-          content[0].team_names[1] = content[1].team_names[1];
-        }
-        const matchConv = content.map(convertGameState);
-
-        setData(matchConv)
+      .then((content: GameState[]) => {
+        setData(content)
       });
   }, [src]);
 
