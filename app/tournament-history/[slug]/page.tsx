@@ -5,6 +5,7 @@ import path from 'path';
 
 import PelitaReplay from '@/app/pelita_replay';
 import { convertGameStateL, GameState, ObserveGameState } from '@/app/pelita_types';
+import { H1Underline } from '@/app/utils/utils';
 
 import { parseJSONL } from './[file]/route';
 function escapeHtml(unsafe: string) {
@@ -78,8 +79,10 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     code: ({ children }: { children: string }) => {
       return <code dangerouslySetInnerHTML={{ __html: embolden(escapeHtml(children)) }}></code>;
     },
-    ul: props => <ul className="list-(--list-marker) list-inside" {...props}></ul>,
-    h1: ({children}) => <div><h1>{children}</h1><div>{"=".repeat(children.length)}</div></div>
+    // -mt-4 in ul to counter the space-y-4 that is defined around the page
+    // This removes the line between group name and team members
+    ul: props => <ul className="list-(--list-marker) list-inside -mt-4" {...props}></ul>,
+    h1: ({children}) => <H1Underline>{children}</H1Underline>
   };
 
   return <TournamentPage components={components}></TournamentPage>;
