@@ -3,12 +3,11 @@ import type { NextConfig } from 'next';
 import createMDX from '@next/mdx';
 
 const nextConfig: NextConfig = {
-  // basePath: process.env.BASE_PATH || "",
-  basePath: "/pelita-webtournament",
-  output: "export",
-  images: {
-    unoptimized: true,
-  },
+  basePath: '',
+  output: 'standalone',
+  // images: {
+  //   unoptimized: true,
+  // },
   pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
 };
 
