@@ -845,20 +845,6 @@ function Maze({
             .fill-red {
               fill: var(--color-red);
             }
-            .say-bg {
-              stroke-width: 1.7px;
-              stroke: white;
-              font-size: 7px;
-              text-anchor: middle;
-              dominant-baseline: middle;
-              z-index: 90;
-            }
-            .say {
-              font-size: 7px;
-              text-anchor: middle;
-              dominant-baseline: middle;
-              z-index: 100;
-            }
             .gameover-overlay {
               fill: #FFC903;
               letter-spacing: 0px;

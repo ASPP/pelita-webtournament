@@ -128,3 +128,15 @@ body {
     darkred 20px
   );
 }
+
+/* Bot speak */
+.mazebox svg .say-bg {
+              @apply stroke-[1.7px] stroke-white dark:stroke-gray-800 text-[7px] z-[90];
+              text-anchor: middle;
+              dominant-baseline: middle;
+}
+.mazebox .say {
+              @apply fill-black dark:fill-white text-[7px] z-[100];
+              text-anchor: middle;
+              dominant-baseline: middle;
+}
