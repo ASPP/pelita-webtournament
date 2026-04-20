@@ -14,8 +14,8 @@
 @theme inline {
   --font-serif: var(--font-abril-fatface);
   --font-sans: var(--font-inter);
-  --font-mono: var(--font-cascadia-code);
-  --default-mono-font-family:  var(--font-cascadia-code);
+  --font-mono: var(--font-cascadia-mono);
+  --default-mono-font-family:  var(--font-cascadia-mono);
 }
 
 :root, :host {

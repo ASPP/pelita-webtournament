@@ -18,20 +18,23 @@ function DevIndicator() {
 //   variable: '--font-roboto-mono',
 // })
 
-export const cascadiaCode = localFont({
+// Main reason to use cascadia was because it has a stylistic set for
+// <span lang="bg"> that we use in the 2025 tournament.
+//
+export const cascadiaMono = localFont({
   src: [
     {
-      path: "../public/fonts/cascadia/CascadiaCode-Regular.woff2",
+      path: "../public/fonts/cascadia/CascadiaMono-Regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../public/fonts/cascadia/CascadiaCode-Bold.woff2",
+      path: "../public/fonts/cascadia/CascadiaMono-Bold.woff2",
       weight: "700",
       style: "normal",
     },
   ],
-  variable: "--font-cascadia-code",
+  variable: "--font-cascadia-mono",
   display: "swap",
 });
 
@@ -52,7 +55,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${cascadiaCode.variable} ${abrilFatface.variable}`}>
+      <body className={`${cascadiaMono.variable} ${abrilFatface.variable}`}>
         <DevIndicator />
         <DebugMessagesProvider>
           {children}
