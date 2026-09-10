@@ -37,6 +37,8 @@ export default function PelitaReplay({
   const [gameData, setGameData] = useState<GameState[]>(preloadFrame ? [preloadFrame] : []);
   const colors: [string, string] = ['rgb(94, 158, 217)', 'rgb(235, 90, 90)'];
 
+  const [loadingString, setLoadingString] = useState("Loading replay.");
+
   colorMap ??= {};
 
   // console.log(colorMap);
@@ -50,6 +52,8 @@ export default function PelitaReplay({
         if (startEnd) {
           setPosition(content.length - 1);
         }
+      }).catch((error) => {
+        setLoadingString(`Something went wrong: ${error}`);
       });
   }, [src, rawGameState]);
 
@@ -95,9 +99,9 @@ export default function PelitaReplay({
 
   if (gameData.length === 0) {
     return (
-      <p>
-        <i>No match data</i>
-      </p>
+      <div className='p-2'>
+        <i>{loadingString}</i>
+      </div>
     );
   }
 
