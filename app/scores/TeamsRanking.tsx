@@ -4,14 +4,14 @@ import { md5 } from 'js-md5';
 import { useEffect, useState } from 'react';
 import React from 'react';
 
-import PelitaReplay from '@/app/pelita_replay';
 import { ColoredDot } from '@/app/utils/utils';
 
 import { Team, Match, WinsLosses } from './models';
+import { ReplayOverlay } from './ReplayOverlay';
 
-const HOST = 'https://pelita.itbportal.biologie.hu-berlin.de/pyapi';
+export const HOST = 'https://pelita.itbportal.biologie.hu-berlin.de/pyapi';
 
-interface Replay {
+export interface Replay {
   slug1: string;
   slug2: string;
   uuid: string;
@@ -121,24 +121,14 @@ function TeamsRanking({ teams }: { teams: Team[] }) {
     }
   }
 
-  const headers = [
-    'Team',
-    'Matches',
-    'Wins',
-    'Draws',
-    'Losses',
-    'Score',
-    'μ',
-    'σ',
-    'Errors',
-  ];
+  const headers = ['Team', 'Matches', 'Wins', 'Draws', 'Losses', 'Score', 'μ', 'σ', 'Errors'];
 
   function colorFromString(str: string) {
     if (!colorMode) return;
     return `#${md5(str).slice(0, 6)}`;
   }
 
-  const scores: Record<string, number> = Object.fromEntries(teams.map((t) => [t.slug, t.score]));
+  const scores: Record<string, number> = Object.fromEntries(teams.map(t => [t.slug, t.score]));
 
   return (
     <>
@@ -189,9 +179,9 @@ function TeamsRanking({ teams }: { teams: Team[] }) {
                     : 'pt-1 md:py-4';
 
                 const nMatches = team.wins + team.draws + team.losses;
-                const percWins = (team.wins / nMatches * 100).toFixed(1);
-                const percDraws = (team.draws / nMatches * 100).toFixed(1);
-                const percLosses = (team.losses / nMatches * 100).toFixed(1);
+                const percWins = ((team.wins / nMatches) * 100).toFixed(1);
+                const percDraws = ((team.draws / nMatches) * 100).toFixed(1);
+                const percLosses = ((team.losses / nMatches) * 100).toFixed(1);
 
                 return (
                   <React.Fragment key={team.id}>
@@ -201,9 +191,15 @@ function TeamsRanking({ teams }: { teams: Team[] }) {
                     >
                       <td className={`px-2 md:px-6 ${padding}`}>{team_name}</td>
                       <td className={`px-2 md:px-6 ${padding}`}>{nMatches}</td>
-                      <td className={`px-2 md:px-6 ${padding}`} title={`${percWins} %`}>{team.wins}</td>
-                      <td className={`px-2 md:px-6 ${padding}`} title={`${percDraws} %`}>{team.draws}</td>
-                      <td className={`px-2 md:px-6 ${padding}`} title={`${percLosses} %`}>{team.losses}</td>
+                      <td className={`px-2 md:px-6 ${padding}`} title={`${percWins} %`}>
+                        {team.wins}
+                      </td>
+                      <td className={`px-2 md:px-6 ${padding}`} title={`${percDraws} %`}>
+                        {team.draws}
+                      </td>
+                      <td className={`px-2 md:px-6 ${padding}`} title={`${percLosses} %`}>
+                        {team.losses}
+                      </td>
                       <td className={`px-2 md:px-6 ${padding}`}>
                         {team.score < 0 ? '' : <>&nbsp;</>}
                         {team.score.toFixed(2)}
@@ -224,55 +220,63 @@ function TeamsRanking({ teams }: { teams: Team[] }) {
                     {expandTeam === team.slug && !loading && winsLosses[team.slug] && (
                       <>
                         {winsLosses[team.slug]
-                        // .toSorted((a, b) => (a.wins - a.losses) / (a.draws + a.wins + a.losses) - (b.wins - b.losses)/ (b.draws + b.wins + b.losses))
-                        // .toSorted((a, b) => a.draws + a.wins + a.losses - b.draws - b.wins - b.losses)
-                        .toSorted((a, b) => scores[a.opponent] - scores[b.opponent])
-                        .toReversed()
-                        .map((a, idx) => {
-                          const total = a.draws + a.wins + a.losses;
-                          const score = (a.wins - a.losses) / total;
-                          const padding =
-                            idx === winsLosses[team.slug].length - 1 ? 'pb-1 md:pb-4 py-0.5' : 'py-0.5';
+                          // .toSorted((a, b) => (a.wins - a.losses) / (a.draws + a.wins + a.losses) - (b.wins - b.losses)/ (b.draws + b.wins + b.losses))
+                          // .toSorted((a, b) => a.draws + a.wins + a.losses - b.draws - b.wins - b.losses)
+                          .toSorted((a, b) => scores[a.opponent] - scores[b.opponent])
+                          .toReversed()
+                          .map((a, idx) => {
+                            const total = a.draws + a.wins + a.losses;
+                            const score = (a.wins - a.losses) / total;
+                            const padding =
+                              idx === winsLosses[team.slug].length - 1
+                                ? 'pb-1 md:pb-4 py-0.5'
+                                : 'py-0.5';
 
-                          const percWins = (a.wins / total * 100).toFixed(1);
-                          const percDraws = (a.draws / total * 100).toFixed(1);
-                          const percLosses = (a.losses / total * 100).toFixed(1);
+                            const percWins = ((a.wins / total) * 100).toFixed(1);
+                            const percDraws = ((a.draws / total) * 100).toFixed(1);
+                            const percLosses = ((a.losses / total) * 100).toFixed(1);
 
-                          return (
-                            <tr
-                              key={a.opponent}
-                              className="hover:bg-amber-50 dark:hover:bg-gray-700"
-                            >
-                              <td className={`px-2 md:px-6 ${padding}`}>
-                                <span
-                                  style={{
-                                    color: colorFromString(a.opponent),
-                                  }}
-                                >
-                                  ᗧ
-                                </span>{' '}
-                                {a.opponent}
-                              </td>
-                              <td className={`px-2 md:px-6 ${padding}`}>{total}</td>
-                              <td className={`px-2 md:px-6 ${padding}`} title={`${percWins} %`}>{a.wins}</td>
-                              <td className={`px-2 md:px-6 ${padding}`} title={`${percDraws} %`}>{a.draws}</td>
-                              <td className={`px-2 md:px-6 ${padding}`} title={`${percLosses} %`}>{a.losses}</td>
-                              <td className={`px-2 md:px-6 ${padding}`}>
-                                {score < 0 ? '' : <>&nbsp;</>}
-                                {score.toFixed(2)}
-                              </td>
-                              <td className={`px-2 md:px-6 ${padding}`} colSpan={4}>
-                                <Matches
-                                  team={team.slug}
-                                  opponent={a.opponent}
-                                  setReplay={uuid => setReplay(uuid)}
-                                ></Matches>
-                              </td>
-                              <td></td>
-                              <td></td>
-                            </tr>
-                          );
-                        })}
+                            return (
+                              <tr
+                                key={a.opponent}
+                                className="hover:bg-amber-50 dark:hover:bg-gray-700"
+                              >
+                                <td className={`px-2 md:px-6 ${padding}`}>
+                                  <span
+                                    style={{
+                                      color: colorFromString(a.opponent),
+                                    }}
+                                  >
+                                    ᗧ
+                                  </span>{' '}
+                                  {a.opponent}
+                                </td>
+                                <td className={`px-2 md:px-6 ${padding}`}>{total}</td>
+                                <td className={`px-2 md:px-6 ${padding}`} title={`${percWins} %`}>
+                                  {a.wins}
+                                </td>
+                                <td className={`px-2 md:px-6 ${padding}`} title={`${percDraws} %`}>
+                                  {a.draws}
+                                </td>
+                                <td className={`px-2 md:px-6 ${padding}`} title={`${percLosses} %`}>
+                                  {a.losses}
+                                </td>
+                                <td className={`px-2 md:px-6 ${padding}`}>
+                                  {score < 0 ? '' : <>&nbsp;</>}
+                                  {score.toFixed(2)}
+                                </td>
+                                <td className={`px-2 md:px-6 ${padding}`} colSpan={4}>
+                                  <Matches
+                                    team={team.slug}
+                                    opponent={a.opponent}
+                                    setReplay={uuid => { setReplay(uuid); }}
+                                  ></Matches>
+                                </td>
+                                <td></td>
+                                <td></td>
+                              </tr>
+                            );
+                          })}
                       </>
                     )}
                   </React.Fragment>
@@ -283,38 +287,14 @@ function TeamsRanking({ teams }: { teams: Team[] }) {
       </div>
 
       {replay && (
-        <div
-          className="fixed inset-0 bg-white/50 dark:bg-black/50"
-          onClick={() => {
+        <ReplayOverlay
+          replay={replay}
+          closeReplayOverlay={() => {
             setReplay(null);
           }}
-        >
-          <aside className="absolute flex justify-center items-center inset-0">
-            <div
-              className=" border rounded bg-white dark:bg-gray-800 p-8 w-11/12 md:w-1/2"
-              onClick={e => e.stopPropagation()}
-            >
-              <PelitaReplay
-                src={`${HOST}/game_replay/${replay.uuid}`}
-                colorMap={
-                  colorMode
-                    ? {
-                        [replay.slug1]: `${colorFromString(replay.slug1)}`,
-                        [replay.slug2]: `${colorFromString(replay.slug2)}`,
-                      }
-                    : undefined
-                }
-                team_specs={[replay.slug1, replay.slug2]}
-                rawGameState={true}
-                startEnd={true}
-                hasQuit={true}
-                hasFF={true}
-                subtleGameOver={!colorMode}
-                onQuit={() => { setReplay(null); }}
-              ></PelitaReplay>
-            </div>
-          </aside>
-        </div>
+          colorMode={colorMode}
+          colorFromString={colorFromString}
+        />
       )}
     </>
   );

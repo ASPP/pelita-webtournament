@@ -42,7 +42,7 @@ export default function PelitaReplay({
   // console.log(colorMap);
 
   useEffect(() => {
-    void fetch(src)
+    void fetch(src, { cache: 'force-cache' })
       .then(r => r.json())
       .then(r => (rawGameState ? convertGameStateL(r) : r))
       .then((content: GameState[]) => {
