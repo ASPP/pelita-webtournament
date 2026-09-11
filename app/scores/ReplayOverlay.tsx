@@ -1,5 +1,6 @@
 'use client';
 
+import Ansi from 'ansi-to-react';
 import { useEffect, useState } from 'react';
 
 import PelitaReplay from '@/app/pelita_replay';
@@ -18,30 +19,35 @@ function GameOutputContent({ uuid, outputMode }: { uuid: string; outputMode: Out
       });
   }, [uuid]);
 
+  let stdout: undefined | string = '';
+  let stderr: undefined | string = '';
+
   switch (outputMode) {
     case 'BlueOutput':
-      return (
-        <pre>
-          {gameOutput?.participants.find(el => el.color == 0)?.stdout}
-          {gameOutput?.participants.find(el => el.color == 0)?.stderr}
-        </pre>
-      );
+      stdout = gameOutput?.participants.find(el => el.color == 1)?.stdout;
+      stderr = gameOutput?.participants.find(el => el.color == 1)?.stderr;
+      break;
     case 'RedOutput':
-      return (
-        <pre>
-          {gameOutput?.participants.find(el => el.color == 1)?.stdout}
-          {gameOutput?.participants.find(el => el.color == 1)?.stderr}
-        </pre>
-      );
+      stdout = gameOutput?.participants.find(el => el.color == 2)?.stdout;
+      stderr = gameOutput?.participants.find(el => el.color == 2)?.stderr;
+      break;
 
     default:
-      return (
-        <pre>
-          {gameOutput?.game_stdout}
-          {gameOutput?.game_stderr}
-        </pre>
-      );
+      stdout = gameOutput?.game_stdout;
+      stderr = gameOutput?.game_stderr;
+      break;
   }
+
+  return (
+    <div className="text-xs">
+      <div className="whitespace-pre-line">
+        <Ansi>{stdout}</Ansi>
+      </div>
+      <div className="whitespace-pre-line">
+        <Ansi>{stderr}</Ansi>
+      </div>
+    </div>
+  );
 }
 
 export function ReplayOverlay({
@@ -62,7 +68,9 @@ export function ReplayOverlay({
       <aside className="absolute flex justify-center items-center inset-0">
         <div
           className="border rounded bg-white dark:bg-gray-800 pt-0 p-8 w-11/12 md:w-1/2"
-          onClick={e => { e.stopPropagation(); }}
+          onClick={e => {
+            e.stopPropagation();
+          }}
         >
           <div className="relative">
             <div className="p-2">

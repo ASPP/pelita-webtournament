@@ -19,6 +19,7 @@
     "@types/mdx": "^2.0.13",
     "@uiw/react-color-compact": "^2.9.5",
     "animejs": "^4.2.0",
+    "ansi-to-react": "^6.2.6",
     "color-name-to-code": "^1.0.1",
     "js-md5": "^0.8.3",
     "motion": "^12.35.0",
