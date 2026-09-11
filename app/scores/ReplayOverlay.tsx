@@ -39,7 +39,7 @@ function GameOutputContent({ uuid, outputMode }: { uuid: string; outputMode: Out
   }
 
   return (
-    <div className="text-xs">
+    <div className="text-xs max-h-96 overflow-scroll">
       <div className="whitespace-pre-line">
         <Ansi>{stdout}</Ansi>
       </div>
