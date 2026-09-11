@@ -111,7 +111,7 @@ export default function PelitaMatch({
   return (
     <div
       ref={root}
-      className="pelita"
+      className="pelita @container"
       style={
         {
           '--color-blue': colorBlue,
@@ -121,7 +121,8 @@ export default function PelitaMatch({
         } as React.CSSProperties
       }
     >
-      <h2 className={`flex flex-row text-xl p-2 team-names opacity-0`} ref={addToReveal}>
+      {/* text-[clamp(var(--text-xl),2cqw,3rem)] */}
+      <h2 className={`flex flex-row text-[clamp(0.8rem,2.7cqw,var(--text-3xl))] p-2 team-names opacity-0`} ref={addToReveal}>
         <span className="basis-1/2 text-right w-64 blue-bot">
           <span className="p-1 blue-bot-bg">
             <small>{team_info1}</small> <b className={(gameState.gameover && gameState.whowins === 0) ? "underline" : "" }>{team1}</b> {gameState.game_stats.score[0]}
@@ -134,7 +135,7 @@ export default function PelitaMatch({
           </span>
         </span>
       </h2>
-      <div className={`flex flex-row text-xs team-stats opacity-0`} ref={addToReveal}>
+      <div className={`flex flex-row text-[clamp(0.7rem,1.4cqw,var(--text-2xl))] team-stats opacity-0`} ref={addToReveal}>
         <div className="basis-1/2 w-64 px-2">
           {stats1}
         </div>
@@ -160,7 +161,7 @@ export default function PelitaMatch({
         gameOverScreen={!subtleGameOver}
       ></Maze>
 
-      <div className={`flex flex-row text-xs text-slate-600 footer opacity-0`} ref={addToReveal}>
+      <div className={`flex flex-row text-[clamp(0.7rem,1.4cqw,var(--text-2xl))] text-slate-600 footer opacity-0`} ref={addToReveal}>
         <div className="basis-1/2 w-64 px-2">{footer}</div>
         <div className="basis-1/2 text-right w-64 px-2">
           <>

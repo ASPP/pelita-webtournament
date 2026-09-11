@@ -70,11 +70,13 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
   const components: MDXComponents = {
     PelitaReplay: props => (
+      <div className="xl:max-w-2xl">
       <PelitaReplay
         src={`${slug}/${props.src}`}
         colorMap={colorMap}
         preloadFrame={doLookup(props.src)}
       ></PelitaReplay>
+      </div>
     ),
     code: ({ children }: { children: string }) => {
       return <code dangerouslySetInnerHTML={{ __html: embolden(escapeHtml(children)) }}></code>;

@@ -67,7 +67,7 @@ export function ReplayOverlay({
     <div className="fixed inset-0 bg-white/50 dark:bg-black/50" onClick={closeReplayOverlay}>
       <aside className="absolute flex justify-center items-center inset-0">
         <div
-          className="border rounded bg-white dark:bg-gray-800 pt-0 p-8 w-11/12 md:w-1/2"
+          className="border rounded bg-white dark:bg-gray-800 pt-0 p-8 w-11/12 md:w-3/4 lg:w-1/2"
           onClick={e => {
             e.stopPropagation();
           }}
