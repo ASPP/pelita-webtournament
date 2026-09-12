@@ -6,7 +6,7 @@ import { Reducer, useCallback, useEffect, useReducer, useState } from 'react';
 
 import DebugFooter from '@/app/debugfooter';
 import { useMessageReceiver, replaceAnsi } from '@/app/message_receiver';
-import PelitaMatch from '@/app/pelita_match';
+import PelitaFrame from '@/app/PelitaFrame';
 import { convertGameState, GameState, TeamMetadata, TournamentMetadata } from '@/app/pelita_types';
 import SingleGame from '@/app/single-game';
 import TypewriterText from '@/app/typewritertext';
@@ -277,12 +277,12 @@ function PelitaTournament() {
               </h1>
 
               {gameState && tournamentMetadata && (
-                <PelitaMatch
+                <PelitaFrame
                   gameState={gameState}
                   colors={colors}
                   footer={`ᗧ Pelita Tournament, ${tournamentMetadata.location} ${tournamentMetadata.date}`}
                   do_animate={true}
-                ></PelitaMatch>
+                ></PelitaFrame>
               )}
             </div>
           )}

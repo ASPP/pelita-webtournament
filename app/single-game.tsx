@@ -5,7 +5,7 @@ import { createTimeline } from 'animejs';
 import { useCallback, useEffect, useState } from 'react';
 
 import { useMessageReceiver } from '@/app/message_receiver';
-import PelitaMatch from '@/app/pelita_match';
+import PelitaFrame from '@/app/PelitaFrame';
 import { convertGameState, GameState } from '@/app/pelita_types';
 
 function SingleGame() {
@@ -85,12 +85,12 @@ function SingleGame() {
     </h1> */}
 
       {gameState && (
-        <PelitaMatch
+        <PelitaFrame
           gameState={gameState}
           colors={colors}
           footer={`ᗧ Pelita Tournament, location date`}
           do_animate={animationState}
-        ></PelitaMatch>
+        ></PelitaFrame>
       )}
       {/*
       <ZMQReceiver

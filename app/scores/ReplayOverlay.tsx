@@ -3,7 +3,7 @@
 import Ansi from 'ansi-to-react';
 import { useEffect, useState } from 'react';
 
-import PelitaReplay from '@/app/pelita_replay';
+import PelitaReplay from '@/app/PelitaReplay';
 
 import { GameOutput, OutputMode } from './models';
 import { Replay, HOST } from './TeamsRanking';

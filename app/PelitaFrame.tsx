@@ -29,7 +29,7 @@ function showError(error: FatalError) {
   return `Round ${error.round}, ${error.type}: ${error.description}`;
 }
 
-export default function PelitaMatch({
+export default function PelitaFrame({
   gameState,
   colors = defaultColors,
   footer,

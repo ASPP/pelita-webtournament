@@ -6,7 +6,7 @@ import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid';
 
 import { useMessageReceiver } from '@/app/message_receiver';
-import PelitaMatch from '@/app/pelita_match';
+import PelitaFrame from '@/app/PelitaFrame';
 import { convertGameState, GameState, GameStats } from '@/app/pelita_types';
 import { ColoredDot } from '@/app/utils/utils';
 
@@ -208,13 +208,13 @@ function DemoGame({ shape = [32, 16] }: { shape?: [number, number] }) {
           ᗧ Pelita Tournament
         </h1>
 
-        <PelitaMatch
+        <PelitaFrame
           key={rerenderMatchKey}
           gameState={gameState}
           colors={colors}
           footer={`ᗧ Pelita Tournament, location date`}
           do_animate={animationState}
-        ></PelitaMatch>
+        ></PelitaFrame>
 
         <div ref={addToReveal} className="opacity-0">
           <button

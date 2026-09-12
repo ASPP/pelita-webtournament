@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import PelitaMatch from './pelita_match';
+import PelitaFrame from './PelitaFrame';
 import { convertGameStateL, GameState } from './pelita_types';
 
 type ColorMap = Record<string, string>;
@@ -121,7 +121,7 @@ export default function PelitaReplay({
 
   return (
     <div className="">
-      <PelitaMatch do_animate={false} footer="" colors={colors} gameState={currentGameState} subtleGameOver={subtleGameOver}></PelitaMatch>
+      <PelitaFrame do_animate={false} footer="" colors={colors} gameState={currentGameState} subtleGameOver={subtleGameOver}></PelitaFrame>
 
       <div className={`grid grid-cols-${4 + (hasFF ? 1 : 0) + (hasQuit ? 1 : 0)} gap-4 items-center justify-between`}>
 
