@@ -118,61 +118,74 @@ export default function PelitaReplay({
   currentGameState.game_uuid ??= src;
 
   const buttonCols = 4 + (hasFF ? 1 : 0) + (hasQuit ? 1 : 0);
+  const buttonClassNames =
+    'bg-transparent w-full text-[clamp(0.3rem,18cqw,0.8rem)] hover:bg-blue-500 text-blue-700 font-semibold hover:text-white p-1 border border-blue-500 hover:border-transparent rounded disabled:border-white-500';
 
   return (
     <div className="">
-      <PelitaFrame do_animate={false} footer="" colors={colors} gameState={currentGameState} subtleGameOver={subtleGameOver}></PelitaFrame>
+      <PelitaFrame
+        do_animate={false}
+        footer=""
+        colors={colors}
+        gameState={currentGameState}
+        subtleGameOver={subtleGameOver}
+      ></PelitaFrame>
 
-      <div className={`grid grid-cols-${4 + (hasFF ? 1 : 0) + (hasQuit ? 1 : 0)} gap-4 items-center justify-between`}>
+      <div
+        className={`grid grid-cols-${4 + (hasFF ? 1 : 0) + (hasQuit ? 1 : 0)} gap-4 items-center justify-between`}
+      >
+        {hasQuit && (
+          <div className="@container">
+            <button className={buttonClassNames} onClick={onQuit}>
+              quit
+            </button>
+          </div>
+        )}
 
-        {hasQuit && <button
-          className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-1 px-3 border border-blue-500 hover:border-transparent rounded disabled:border-white-500"
-          onClick={onQuit}
-        >
-          quit
-        </button>
-        }
+        <div className="@container">
+          <button
+            className={buttonClassNames}
+            onClick={() => {
+              setPosition(0);
+            }}
+            disabled={!position}
+          >
+            rewind
+          </button>
+        </div>
+        <div className="@container">
+          <button className={buttonClassNames} onClick={back}>
+            back
+          </button>
+        </div>
+        <div className="@container">
+          <button
+            className={buttonClassNames}
+            onClick={() => {
+              setStarted(!started);
+            }}
+          >
+            {started ? `pause` : `play`}
+          </button>
+        </div>
+        <div className="@container">
+          <button className={buttonClassNames} onClick={step}>
+            step
+          </button>
+        </div>
 
-        <button
-          className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-1 px-3 border border-blue-500 hover:border-transparent rounded disabled:border-white-500"
-          onClick={() => {
-            setPosition(0);
-          }}
-          disabled={!position}
-        >
-          rewind
-        </button>
-        <button
-          className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-1 px-3 border border-blue-500 hover:border-transparent rounded"
-          onClick={back}
-        >
-          back
-        </button>
-        <button
-          className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-1 px-3 border border-blue-500 hover:border-transparent rounded"
-          onClick={() => {
-            setStarted(!started);
-          }}
-        >
-          {started ? `pause` : `play`}
-        </button>
-        <button
-          className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-1 px-3 border border-blue-500 hover:border-transparent rounded"
-          onClick={step}
-        >
-          step
-        </button>
-
-        {hasFF && <button
-          className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-1 px-3 border border-blue-500 hover:border-transparent rounded"
-          onClick={() => {
-            setPosition(gameData.length - 1);
-          }}
-        >
-          forward
-        </button>
-        }
-
+        {hasFF && (
+          <div className="@container">
+            <button
+              className={buttonClassNames}
+              onClick={() => {
+                setPosition(gameData.length - 1);
+              }}
+            >
+              forward
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
