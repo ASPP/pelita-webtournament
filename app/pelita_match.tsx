@@ -111,7 +111,7 @@ export default function PelitaMatch({
   return (
     <div
       ref={root}
-      className="pelita @container"
+      className="pelita @container pb-2"
       style={
         {
           '--color-blue': colorBlue,
@@ -122,7 +122,7 @@ export default function PelitaMatch({
       }
     >
       {/* text-[clamp(var(--text-xl),2cqw,3rem)] */}
-      <h2 className={`flex flex-row text-[clamp(0.8rem,2.7cqw,var(--text-3xl))] p-2 team-names opacity-0`} ref={addToReveal}>
+      <h2 className={`flex flex-row text-[clamp(0.8rem,2.7cqw,var(--text-3xl))] leading-[1.1] p-2 team-names opacity-0`} ref={addToReveal}>
         <span className="basis-1/2 text-right w-64 blue-bot">
           <span className="p-1 blue-bot-bg">
             <small>{team_info1}</small> <b className={(gameState.gameover && gameState.whowins === 0) ? "underline" : "" }>{team1}</b> {gameState.game_stats.score[0]}
@@ -135,11 +135,11 @@ export default function PelitaMatch({
           </span>
         </span>
       </h2>
-      <div className={`flex flex-row text-[clamp(0.7rem,1.4cqw,var(--text-2xl))] team-stats opacity-0`} ref={addToReveal}>
-        <div className="basis-1/2 w-64 px-2">
+      <div className={`flex flex-row text-[clamp(0.7rem,1.4cqw,var(--text-2xl))] leading-[1.1] team-stats opacity-0`} ref={addToReveal}>
+        <div className="basis-1/2 w-64 px-2 py-1">
           {stats1}
         </div>
-        <div className="basis-1/2 text-right w-64 px-2">
+        <div className="basis-1/2 text-right w-64 px-2 py-1">
           {stats2}
         </div>
       </div>
@@ -161,9 +161,9 @@ export default function PelitaMatch({
         gameOverScreen={!subtleGameOver}
       ></Maze>
 
-      <div className={`flex flex-row text-[clamp(0.7rem,1.4cqw,var(--text-2xl))] text-slate-600 footer opacity-0`} ref={addToReveal}>
-        <div className="basis-1/2 w-64 px-2">{footer}</div>
-        <div className="basis-1/2 text-right w-64 px-2">
+      <div className={`flex flex-row text-[clamp(0.7rem,1.4cqw,var(--text-2xl))] leading-[1.1] text-slate-600 footer opacity-0`} ref={addToReveal}>
+        <div className="basis-1/2 w-64 px-2 py-1">{footer}</div>
+        <div className="basis-1/2 text-right w-64 px-2 py-1">
           <>
           {gameState.fatal_errors[0].length != 0 && gameState.fatal_errors[0].map(showError)}
           {gameState.fatal_errors[1].length != 0 && gameState.fatal_errors[1].map(showError)}
