@@ -27,7 +27,7 @@ export function PelitaReplayControls({
 }) {
   const buttonCols = 4 + (hasFF ? 1 : 0) + (hasQuit ? 1 : 0);
   const buttonClassNames =
-    'bg-transparent w-full text-[clamp(0.3rem,18cqw,0.8rem)] hover:bg-blue-500 text-blue-700 font-semibold hover:text-white p-1 border border-blue-500 hover:border-transparent rounded disabled:border-white-500';
+    'bg-transparent w-full text-blue-700 font-semibold p-1 border border-blue-500 rounded hover:bg-blue-500 hover:text-white hover:border-transparent disabled:cursor-default disabled:hover:bg-transparent disabled:text-gray-400 disabled:border-gray-300 disabled:hover:text-gray-400 disabled:hover:border-gray-300';
 
   return (
     <div className={`grid grid-cols-${buttonCols} gap-4 items-center justify-between`}>
