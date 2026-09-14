@@ -128,7 +128,7 @@ export function ReplayOverlay({
               }
               team_specs={[replay.slug1, replay.slug2]}
               rawGameState={true}
-              startEnd={true}
+              jumpToEnd={true}
               hasQuit={true}
               hasFF={true}
               subtleGameOver={!colorMode}

@@ -3,8 +3,8 @@ import type { MDXComponents } from 'mdx/types';
 import fs from 'fs/promises';
 import path from 'path';
 
-import PelitaReplay from '@/app/PelitaReplay';
 import { convertGameStateL, GameState, ObserveGameState } from '@/app/pelita_types';
+import PelitaReplay from '@/app/PelitaReplay';
 import { H1Underline } from '@/app/utils/utils';
 
 import { parseJSONL } from './[file]/route';

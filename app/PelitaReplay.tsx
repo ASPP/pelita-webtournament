@@ -2,10 +2,39 @@
 
 import { useEffect, useState } from 'react';
 
-import PelitaFrame from './PelitaFrame';
 import { convertGameStateL, GameState } from './pelita_types';
+import PelitaFrame from './PelitaFrame';
+import { PelitaReplayControls } from './PelitaReplayControls';
 
 type ColorMap = Record<string, string>;
+
+export function usePelitaReplay(src: string, rawGameState = false) {
+  const [frames, setFrames] = useState<GameState[] | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(src, { cache: 'force-cache' })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(r => (rawGameState ? convertGameStateL(r) : r))
+      .then(data => {
+        if (!cancelled) setFrames(data);
+      })
+      .catch(error => {
+        if (!cancelled) setError(error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [src, rawGameState]);
+
+  return { frames, error };
+}
 
 export default function PelitaReplay({
   src,
@@ -13,99 +42,117 @@ export default function PelitaReplay({
   rawGameState = false,
   colorMap,
   preloadFrame,
-  startEnd = false,
+  jumpToEnd = false,
   hasQuit = false,
   hasFF = false,
   subtleGameOver = false,
-  onQuit
+  onQuit,
 }: {
   src: string;
   team_specs?: [string, string];
   rawGameState?: boolean;
   colorMap?: ColorMap;
   preloadFrame?: GameState;
-  startEnd?: boolean;
+  jumpToEnd?: boolean;
   hasQuit?: boolean;
   hasFF?: boolean;
   subtleGameOver?: boolean;
-  onQuit?: () => void
+  onQuit?: () => void;
 }) {
-  const [position, setPosition] = useState(0);
+  const { frames, error } = usePelitaReplay(src, rawGameState);
+  const [frameIndex, setFrameIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!frames) return;
+
+    setFrameIndex(current => {
+      if (current !== null) return current;
+
+      return jumpToEnd ? frames.length - 1 : 0;
+    });
+  }, [frames, jumpToEnd]);
+
+  const currentGameState = (frames && frameIndex !== null ? frames[frameIndex] : undefined) ?? preloadFrame;
+
   const [started, setStarted] = useState(false);
   const delay = 40;
 
-  const [gameData, setGameData] = useState<GameState[]>(preloadFrame ? [preloadFrame] : []);
+  if (currentGameState) currentGameState.game_uuid ??= src;
+
   const colors: [string, string] = ['rgb(94, 158, 217)', 'rgb(235, 90, 90)'];
 
-  const [loadingString, setLoadingString] = useState("Loading replay.");
+  const [loadingString, setLoadingString] = useState('Loading replay.');
 
   colorMap ??= {};
-
-  // console.log(colorMap);
-
-  useEffect(() => {
-    void fetch(src, { cache: 'force-cache' })
-      .then(r => r.json())
-      .then(r => (rawGameState ? convertGameStateL(r) : r))
-      .then((content: GameState[]) => {
-        setGameData(content);
-        if (startEnd) {
-          setPosition(content.length - 1);
-        }
-      }).catch((error) => {
-        setLoadingString(`Something went wrong: ${error}`);
-      });
-  }, [src, rawGameState]);
 
   useEffect(() => {
     const id = setTimeout(() => {
       if (!started) return;
-      if (gameData.length === 0) return;
+      if (!frames || frames.length === 0) return;
 
-      setPosition(state => {
-        if (state + 1 < gameData.length) return state + 1;
-        else {
-          clearTimeout(id);
-          setStarted(false);
-          return state;
-        }
+      setFrameIndex(state => {
+        if (state == null) return 0;
+        if (state + 1 < frames.length) return state + 1;
+
+        clearTimeout(id);
+        setStarted(false);
+        return state;
       });
     }, delay);
     return () => {
       clearTimeout(id);
     };
-  }, [position, started, gameData]);
+  }, [started, frames, frameIndex]);
 
   function back() {
-    if (gameData.length === 0) return;
+    if (!frames || frames.length === 0) return;
 
     setStarted(false);
-    setPosition(s => Math.max(s - 1, 0));
+    setFrameIndex(s => (s !== null ? Math.max(s - 1, 0) : null));
+  }
+
+  function rewind() {
+    if (!frames || frames.length === 0) return;
+
+    setStarted(false);
+    setFrameIndex(s => (s !== null ? 0 : null));
   }
 
   function fastForward() {
-    if (gameData.length === 0) return;
+    if (!frames || frames.length === 0) return;
 
     setStarted(false);
-    setPosition(s => Math.min(s + 1, gameData.length - 1));
+    setFrameIndex(s => (s !== null ? frames.length - 1 : null));
   }
 
   function step() {
-    if (gameData.length === 0) return;
+    if (!frames || frames.length === 0) return;
 
     setStarted(false);
-    setPosition(s => Math.min(s + 1, gameData.length - 1));
+    setFrameIndex(s => (s !== null ? Math.min(s + 1, frames.length - 1) : null));
   }
 
-  if (gameData.length === 0) {
+  function playPause() {
+    setStarted(s => !s);
+  }
+
+  if (error) {
     return (
-      <div className='p-2'>
+      <div className="p-2">
+        <i>{`${error}`}</i>
+      </div>
+    );
+  }
+
+  if (!currentGameState) {
+    return (
+      <div className="p-2">
         <i>{loadingString}</i>
       </div>
     );
   }
 
-  team_specs ??= gameData[0].team_specs;
+  team_specs ??= currentGameState.team_specs;
   if (team_specs[0] in colorMap) {
     colors[0] = colorMap[team_specs[0]];
   }
@@ -114,12 +161,8 @@ export default function PelitaReplay({
     colors[1] = colorMap[team_specs[1]];
   }
 
-  const currentGameState = gameData[position];
-  currentGameState.game_uuid ??= src;
-
-  const buttonCols = 4 + (hasFF ? 1 : 0) + (hasQuit ? 1 : 0);
-  const buttonClassNames =
-    'bg-transparent w-full text-[clamp(0.3rem,18cqw,0.8rem)] hover:bg-blue-500 text-blue-700 font-semibold hover:text-white p-1 border border-blue-500 hover:border-transparent rounded disabled:border-white-500';
+  const canPrev = frames !== null && frameIndex !== null && frameIndex !== 0;
+  const canNext = frames !== null && frameIndex !== null && frameIndex !== frames.length - 1;
 
   return (
     <div className="">
@@ -131,62 +174,8 @@ export default function PelitaReplay({
         subtleGameOver={subtleGameOver}
       ></PelitaFrame>
 
-      <div
-        className={`grid grid-cols-${4 + (hasFF ? 1 : 0) + (hasQuit ? 1 : 0)} gap-4 items-center justify-between`}
-      >
-        {hasQuit && (
-          <div className="@container">
-            <button className={buttonClassNames} onClick={onQuit}>
-              quit
-            </button>
-          </div>
-        )}
-
-        <div className="@container">
-          <button
-            className={buttonClassNames}
-            onClick={() => {
-              setPosition(0);
-            }}
-            disabled={!position}
-          >
-            rewind
-          </button>
-        </div>
-        <div className="@container">
-          <button className={buttonClassNames} onClick={back}>
-            back
-          </button>
-        </div>
-        <div className="@container">
-          <button
-            className={buttonClassNames}
-            onClick={() => {
-              setStarted(!started);
-            }}
-          >
-            {started ? `pause` : `play`}
-          </button>
-        </div>
-        <div className="@container">
-          <button className={buttonClassNames} onClick={step}>
-            step
-          </button>
-        </div>
-
-        {hasFF && (
-          <div className="@container">
-            <button
-              className={buttonClassNames}
-              onClick={() => {
-                setPosition(gameData.length - 1);
-              }}
-            >
-              forward
-            </button>
-          </div>
-        )}
-      </div>
+      <PelitaReplayControls hasQuit={hasQuit} onQuit={onQuit} onRewind={rewind} canPrev={canPrev} onBack={back} onPlayPause={playPause} started={started} onStep={step} canNext={canNext} hasFF={hasFF} onFastForward={fastForward}  />
     </div>
   );
 }
+
