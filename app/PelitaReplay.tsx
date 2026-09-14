@@ -72,16 +72,23 @@ export default function PelitaReplay({
     });
   }, [frames, jumpToEnd]);
 
-  const currentGameState = (frames && frameIndex !== null ? frames[frameIndex] : undefined) ?? preloadFrame;
+
 
   const [started, setStarted] = useState(false);
   const delay = 40;
 
-  if (currentGameState) currentGameState.game_uuid ??= src;
 
   const colors: [string, string] = ['rgb(94, 158, 217)', 'rgb(235, 90, 90)'];
 
   const [loadingString, setLoadingString] = useState('Loading replay.');
+
+  let footer = "";
+  let currentGameState = (frames && frameIndex !== null ? frames[frameIndex] : undefined);
+  if (!currentGameState && preloadFrame) {
+    currentGameState = preloadFrame;
+    footer = loadingString;
+  }
+  if (currentGameState) currentGameState.game_uuid ??= src;
 
   colorMap ??= {};
 
@@ -168,7 +175,7 @@ export default function PelitaReplay({
     <div className="">
       <PelitaFrame
         do_animate={false}
-        footer=""
+        footer={footer}
         colors={colors}
         gameState={currentGameState}
         subtleGameOver={subtleGameOver}
