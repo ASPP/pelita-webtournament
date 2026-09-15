@@ -38,7 +38,6 @@ export function PelitaReplayControls({
           </button>
         </div>
       )}
-
       <div className="@container">
         <button className={buttonClassNames} onClick={onRewind} disabled={!canPrev}>
           rewind
@@ -50,10 +49,7 @@ export function PelitaReplayControls({
         </button>
       </div>
       <div className="@container">
-        <button
-          className={buttonClassNames}
-          onClick={onPlayPause}
-        >
+        <button className={buttonClassNames} onClick={onPlayPause} disabled={!canNext}>
           {started ? `pause` : `play`}
         </button>
       </div>
@@ -62,7 +58,6 @@ export function PelitaReplayControls({
           step
         </button>
       </div>
-
       {hasFF && (
         <div className="@container">
           <button className={buttonClassNames} onClick={onFastForward} disabled={!canNext}>
