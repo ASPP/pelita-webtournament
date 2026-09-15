@@ -4,8 +4,8 @@ import { animate } from 'animejs';
 import { colorNameToCode } from 'color-name-to-code';
 import { useEffect, useEffectEvent, useRef } from 'react';
 
-import Maze from './maze';
 import { FatalError, GameState } from './pelita_types';
+import PelitaMaze from './PelitaMaze';
 
 const defaultColors: [string, string] = ['rgb(94, 158, 217)', 'rgb(235, 90, 90)'];
 
@@ -144,7 +144,7 @@ export default function PelitaFrame({
         </div>
       </div>
 
-      <Maze
+      <PelitaMaze
         key={gameState.game_uuid}
         game_uuid={gameState.game_uuid}
         shape={gameState.shape}
@@ -159,7 +159,7 @@ export default function PelitaFrame({
         turn={gameState.turn}
         do_animate={do_animate}
         gameOverScreen={!subtleGameOver}
-      ></Maze>
+      ></PelitaMaze>
 
       <div className={`flex flex-row text-[clamp(0.7rem,1.4cqw,var(--text-2xl))] leading-[1.1] text-slate-600 footer opacity-0`} ref={addToReveal}>
         <div className="basis-1/2 w-64 px-2 py-1">{footer}</div>

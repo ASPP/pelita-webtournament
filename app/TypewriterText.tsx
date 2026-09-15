@@ -1,7 +1,7 @@
 import { animate, createScope, Scope } from 'animejs';
 import { useEffect, useRef, useState } from "react";
 
-import styles from "./typewritertext.module.css";
+import styles from "./TypewriterText.module.css";
 
 
 function Cursor() {

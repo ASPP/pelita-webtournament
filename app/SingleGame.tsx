@@ -4,9 +4,9 @@ import Compact from '@uiw/react-color-compact';
 import { createTimeline } from 'animejs';
 import { useCallback, useEffect, useState } from 'react';
 
-import { useMessageReceiver } from '@/app/message_receiver';
-import PelitaFrame from '@/app/PelitaFrame';
+import { useMessageReceiver } from '@/app/MessageReceiver';
 import { convertGameState, GameState } from '@/app/pelita_types';
+import PelitaFrame from '@/app/PelitaFrame';
 
 function SingleGame() {
   const [animationState, setAnimationState] = useState(true);

@@ -513,7 +513,7 @@ function Walls({ shape, walls }: { shape: Pos; walls: Pos[] }) {
   );
 }
 
-function Maze({
+function PelitaMaze({
   game_uuid,
   shape,
   walls,
@@ -935,4 +935,4 @@ function Maze({
     </div>
   );
 }
-export default Maze;
+export default PelitaMaze;

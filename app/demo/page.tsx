@@ -5,9 +5,9 @@ import { animate, createTimeline, Timeline } from 'animejs';
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { useMessageReceiver } from '@/app/message_receiver';
-import PelitaFrame from '@/app/PelitaFrame';
+import { useMessageReceiver } from '@/app/MessageReceiver';
 import { convertGameState, GameState, GameStats } from '@/app/pelita_types';
+import PelitaFrame from '@/app/PelitaFrame';
 import { ColoredDot } from '@/app/utils/utils';
 
 function dummyGameState(width: number, height: number, make_random = true) {

@@ -4,7 +4,7 @@ import { Abril_Fatface } from 'next/font/google';
 import localFont from "next/font/local";
 
 import './globals.css';
-import { DebugMessagesProvider } from './debugmessages';
+import { DebugMessagesProvider } from './DebugMessages';
 
 function DevIndicator() {
   if (process.env.NODE_ENV === 'production') return null;

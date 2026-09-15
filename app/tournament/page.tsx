@@ -4,12 +4,12 @@ import { createTimeline } from 'animejs';
 import { motion } from 'motion/react';
 import { Reducer, useCallback, useEffect, useReducer, useState } from 'react';
 
-import DebugFooter from '@/app/debugfooter';
-import { useMessageReceiver, replaceAnsi } from '@/app/message_receiver';
-import PelitaFrame from '@/app/PelitaFrame';
+import DebugFooter from '@/app/DebugFooter';
+import { useMessageReceiver, replaceAnsi } from '@/app/MessageReceiver';
 import { convertGameState, GameState, TeamMetadata, TournamentMetadata } from '@/app/pelita_types';
-import SingleGame from '@/app/single-game';
-import TypewriterText from '@/app/typewritertext';
+import PelitaFrame from '@/app/PelitaFrame';
+import SingleGame from '@/app/SingleGame';
+import TypewriterText from '@/app/TypewriterText';
 import { ColoredDot } from '@/app/utils/utils';
 
 type PelitaState =
